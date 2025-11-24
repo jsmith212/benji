@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>1. Record architecture decisions &mdash; Benji Documentation</title>
+  <title>2. Split compute and real time control to separate processors &mdash; Benji Documentation</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=03e43079" />
       <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=e59714d7" />
       <link rel="stylesheet" type="text/css" href="../_static/graphviz.css?v=4ae1632d" />
@@ -24,8 +24,8 @@
     <script src="../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="2. Split compute and real time control to separate processors" href="0002-split-compute-and-real-time-control-to-separate-processors.html" />
-    <link rel="prev" title="Architecture" href="../architecture/index.html" />
+    <link rel="next" title="3. Use Zephyr for the RT control core" href="0003-use-zephyr-for-the-rt-control-core.html" />
+    <link rel="prev" title="1. Record architecture decisions" href="0001-record-architecture-decisions.html" />
   <meta name="color-scheme" content="dark light">
   
   <noscript id="dark-mode-toggle-stylesheets">
@@ -62,14 +62,14 @@
               <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
 <ul class="current">
 <li class="toctree-l1 current"><a class="reference internal" href="../architecture/index.html">Architecture</a><ul class="current">
-<li class="toctree-l2 current"><a class="current reference internal" href="#">1. Record architecture decisions</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="0001-record-architecture-decisions.html">1. Record architecture decisions</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">2. Split compute and real time control to separate processors</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#status">Status</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#context">Context</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#decision">Decision</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#consequences">Consequences</a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="0002-split-compute-and-real-time-control-to-separate-processors.html">2. Split compute and real time control to separate processors</a></li>
 <li class="toctree-l2"><a class="reference internal" href="0003-use-zephyr-for-the-rt-control-core.html">3. Use Zephyr for the RT control core</a></li>
 <li class="toctree-l2"><a class="reference internal" href="0004-use-embedded-linux-via-yocto-for-the-compute-platform.html">4. Use embedded linux via Yocto for the compute platform</a></li>
 <li class="toctree-l2"><a class="reference internal" href="0005-version-and-build-all-apps-as-a-single-entity.html">5. Version and build all apps as a single entity</a></li>
@@ -106,7 +106,7 @@
   
      <li><a href="../architecture/index.html">Architecture</a> &raquo;</li>
   
-  <li>1. Record architecture decisions</li>
+  <li>2. Split compute and real time control to separate processors</li>
 
 
   <li class="wy-breadcrumbs-aside">
@@ -120,24 +120,42 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
              
-  <section id="record-architecture-decisions">
-<h1>1. Record architecture decisions<a class="headerlink" href="#record-architecture-decisions" title="Link to this heading"></a></h1>
-<p>Date: 2025-11-22</p>
+  <section id="split-compute-and-real-time-control-to-separate-processors">
+<h1>2. Split compute and real time control to separate processors<a class="headerlink" href="#split-compute-and-real-time-control-to-separate-processors" title="Link to this heading"></a></h1>
+<p>Date: 2025-11-23</p>
 <section id="status">
 <h2>Status<a class="headerlink" href="#status" title="Link to this heading"></a></h2>
 <p>Accepted</p>
 </section>
 <section id="context">
 <h2>Context<a class="headerlink" href="#context" title="Link to this heading"></a></h2>
-<p>We need to record the architectural decisions made on this project.</p>
+<p>Benji’s capabilities can be broadly divided into two categories: compute-intensive tasks (such as image processing and path planning) and real-time control tasks (such as motor control and sensor data acquisition). The sensor and actuator list is currently baselined as follows:</p>
+<ul class="simple">
+<li><p>Sensors:</p>
+<ul>
+<li><p>Camera (for image processing)</p></li>
+<li><p>6-axis IMU (accelerometer and gyro)</p></li>
+<li><p>3-axis magnetometer</p></li>
+<li><p>Linear ToF distance sensor</p></li>
+<li><p>4x quadrature encoders (for wheel odometry)</p></li>
+</ul>
+</li>
+<li><p>Actuators:</p>
+<ul>
+<li><p>4x DC gearmotors with individual drivers</p></li>
+<li><p>1x servo motor (for camera tilt)</p></li>
+</ul>
+</li>
+</ul>
+<p>Typically, in the interest of reducing complexity and cost, we’d prefer to run all tasks on a single application processor. Low-latency real-time tasks can be pinned to specific cores, and the Linux PREEMPT-RT kernel patch might be applied. However, it turns out it’s not easy to find a specific board with adequate I/O capabilities without turning to a custom board, which is outside our capabilities to design. Splitting the I/O and low-latency control tasks to a microcontroller will still benefit from a custom board, but the complexity is significantly lower, and it’s quite straightforward to find an MCU with the I/O and compute capabilities required. For compute, this significantly widens the range of suitable off-the-shelf SBCs, in particular allowing us to leverage the Raspberry Pi ecosystem.</p>
 </section>
 <section id="decision">
 <h2>Decision<a class="headerlink" href="#decision" title="Link to this heading"></a></h2>
-<p>We will use Architecture Decision Records, as <a class="reference external" href="http://thinkrelevance.com/blog/2011/11/15/documenting-architecture-decisions">described by Michael Nygard</a>.</p>
+<p>We will split Benji’s compute and real-time control tasks to separate processors. A microcontroller (MCU) will handle real-time control tasks, interfacing directly with sensors and actuators. An application processor (SBC) will handle compute-intensive tasks, communicating with the MCU over high-bandwidth serial.</p>
 </section>
 <section id="consequences">
 <h2>Consequences<a class="headerlink" href="#consequences" title="Link to this heading"></a></h2>
-<p>See Michael Nygard’s article, linked above. For a lightweight ADR toolset, see Nat Pryce’s <a class="reference external" href="https://github.com/npryce/adr-tools">adr-tools</a>.</p>
+<p>This allows much of the real-time control complexity to be deferred to the MCU, which can typically make use of hardware peripherals (particularly the quadrature decoders, which is difficult to implement accurately without a dedicated hardware timer). The MCU can also leverage other ecosystems that have most of the drivers required. The SBC can then focus all its resources on compute tasks, and there is no need to worry about a RT kernel.</p>
 </section>
 </section>
 

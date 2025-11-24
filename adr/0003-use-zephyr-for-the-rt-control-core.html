@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>1. Record architecture decisions &mdash; Benji Documentation</title>
+  <title>3. Use Zephyr for the RT control core &mdash; Benji Documentation</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=03e43079" />
       <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=e59714d7" />
       <link rel="stylesheet" type="text/css" href="../_static/graphviz.css?v=4ae1632d" />
@@ -24,8 +24,8 @@
     <script src="../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="2. Split compute and real time control to separate processors" href="0002-split-compute-and-real-time-control-to-separate-processors.html" />
-    <link rel="prev" title="Architecture" href="../architecture/index.html" />
+    <link rel="next" title="4. Use embedded linux via Yocto for the compute platform" href="0004-use-embedded-linux-via-yocto-for-the-compute-platform.html" />
+    <link rel="prev" title="2. Split compute and real time control to separate processors" href="0002-split-compute-and-real-time-control-to-separate-processors.html" />
   <meta name="color-scheme" content="dark light">
   
   <noscript id="dark-mode-toggle-stylesheets">
@@ -62,15 +62,15 @@
               <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
 <ul class="current">
 <li class="toctree-l1 current"><a class="reference internal" href="../architecture/index.html">Architecture</a><ul class="current">
-<li class="toctree-l2 current"><a class="current reference internal" href="#">1. Record architecture decisions</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="0001-record-architecture-decisions.html">1. Record architecture decisions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="0002-split-compute-and-real-time-control-to-separate-processors.html">2. Split compute and real time control to separate processors</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">3. Use Zephyr for the RT control core</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#status">Status</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#context">Context</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#decision">Decision</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#consequences">Consequences</a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="0002-split-compute-and-real-time-control-to-separate-processors.html">2. Split compute and real time control to separate processors</a></li>
-<li class="toctree-l2"><a class="reference internal" href="0003-use-zephyr-for-the-rt-control-core.html">3. Use Zephyr for the RT control core</a></li>
 <li class="toctree-l2"><a class="reference internal" href="0004-use-embedded-linux-via-yocto-for-the-compute-platform.html">4. Use embedded linux via Yocto for the compute platform</a></li>
 <li class="toctree-l2"><a class="reference internal" href="0005-version-and-build-all-apps-as-a-single-entity.html">5. Version and build all apps as a single entity</a></li>
 </ul>
@@ -106,7 +106,7 @@
   
      <li><a href="../architecture/index.html">Architecture</a> &raquo;</li>
   
-  <li>1. Record architecture decisions</li>
+  <li>3. Use Zephyr for the RT control core</li>
 
 
   <li class="wy-breadcrumbs-aside">
@@ -120,24 +120,30 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
              
-  <section id="record-architecture-decisions">
-<h1>1. Record architecture decisions<a class="headerlink" href="#record-architecture-decisions" title="Link to this heading"></a></h1>
-<p>Date: 2025-11-22</p>
+  <section id="use-zephyr-for-the-rt-control-core">
+<h1>3. Use Zephyr for the RT control core<a class="headerlink" href="#use-zephyr-for-the-rt-control-core" title="Link to this heading"></a></h1>
+<p>Date: 2025-11-23</p>
 <section id="status">
 <h2>Status<a class="headerlink" href="#status" title="Link to this heading"></a></h2>
 <p>Accepted</p>
 </section>
 <section id="context">
 <h2>Context<a class="headerlink" href="#context" title="Link to this heading"></a></h2>
-<p>We need to record the architectural decisions made on this project.</p>
+<p>Following <a class="reference internal" href="0002-split-compute-and-real-time-control-to-separate-processors.html"><span class="std std-doc">ADR-0002</span></a>, we have decided to split Benji’s compute and real-time control tasks to separate processors. The real-time control core will be implemented on a microcontroller (MCU) that interfaces directly with sensors and actuators. There are enough tasks that the MCU will need to handle that using a real-time operating system (RTOS) is advisable, especially considering the benefits and additional features that an RTOS can provide.</p>
+<p>A few factors are driving the choice of an RTOS:</p>
+<ul class="simple">
+<li><p><strong>Device Support</strong> - As a solo developer, it’s not realistic that I can write and maintain all the necessary device drivers while also completing the project in a reasonable time frame, and it’s silly to attempt to do so. A well-supported ecosystem with existing drivers for the required peripherals is essential.</p></li>
+<li><p><strong>Update and Maintenance</strong> - With the planned hardware design, the chip will not be as easy to get to for software updates. An RTOS that supports DFU (Device Firmware Update) over the air or through a simple interface is highly desirable, particularly one with good community support.</p></li>
+<li><p><strong>Portability</strong> - Initially, the hardware will be hacked together to prove functionality, but the long-term plan is to migrate to a custom PCB, which may involve different MCUs, sensors, and actuator drivers. A robust abstraction layer provided by an RTOS will make this migration significantly easier.</p></li>
+</ul>
 </section>
 <section id="decision">
 <h2>Decision<a class="headerlink" href="#decision" title="Link to this heading"></a></h2>
-<p>We will use Architecture Decision Records, as <a class="reference external" href="http://thinkrelevance.com/blog/2011/11/15/documenting-architecture-decisions">described by Michael Nygard</a>.</p>
+<p>We will use the Zephyr Project for the RT control core. Simply put, it meets all the criteria outlined above, in a way that others do not come close to. It also brings a wealth of additional functionality, largely for free, and has a very wide range of supported hardware. It is also in line with my desired tech stack.</p>
 </section>
 <section id="consequences">
 <h2>Consequences<a class="headerlink" href="#consequences" title="Link to this heading"></a></h2>
-<p>See Michael Nygard’s article, linked above. For a lightweight ADR toolset, see Nat Pryce’s <a class="reference external" href="https://github.com/npryce/adr-tools">adr-tools</a>.</p>
+<p>Using Zephyr will significantly reduce the development time for the RT control core, thanks to its extensive device support and active community. The abstraction layers provided by Zephyr will facilitate future hardware changes, making it easier to migrate to a custom PCB. Additionally, Zephyr’s built-in support for DFU will simplify the update process for the deployed hardware. However, it’s known for having a very steep learning curve (particularly for those unfamiliar with embedded Linux and its device/driver model), which may make it difficult to onboard others in the future.</p>
 </section>
 </section>
 
