@@ -3,7 +3,7 @@ language: "cpp"
 
 tasks:
   build:
-    command: "west build ."
+    command: "uv run west build ."
     description: "Build the Benji RT application using west"
     inputs:
       - "prj.conf"
@@ -15,7 +15,7 @@ tasks:
       - "build/**"
 
   flash:
-    command: "west flash --runner jlink"
+    command: "uv run west flash --runner jlink"
     description: "Flash the Benji RT application to the target device"
     deps:
       - build

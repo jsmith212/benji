@@ -3,7 +3,7 @@ language: "bitbake"
 
 tasks:
   setup:
-    command: "kas-container checkout benji-devel.yaml"
+    command: "uv run kas-container checkout benji-devel.yaml"
     description: "Set up the build environment for the Benji Compute platform image using kas-container"
     inputs:
       - "benji-devel.yaml"
@@ -12,7 +12,7 @@ tasks:
       - "sources/**"
 
   build:
-    command: "kas-container build benji-devel.yaml"
+    command: "uv run kas-container build benji-devel.yaml"
     description: "Build the Benji Compute platform image using BitBake, with configurations from benji-devel.yaml"
     deps:
       - "setup"
@@ -26,7 +26,7 @@ tasks:
       - "build/**"
 
   clean:
-    command: "kas-container clean benji-devel.yaml"
+    command: "uv run kas-container clean benji-devel.yaml"
     description: "Clean the build environment for the Benji Compute platform image"
     options:
       cache: false
@@ -35,7 +35,7 @@ tasks:
       - "secrets.yaml"
 
   spotless:
-    command: "kas-container purge benji-devel.yaml && rm -rf build && rm -rf sources/"
+    command: "uv run kas-container purge benji-devel.yaml && rm -rf build && rm -rf sources/"
     description: "Obliterate the sources, work directories, and build artifacts for the Benji Compute platform image"
     options:
       cache: false

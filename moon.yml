@@ -1,4 +1,4 @@
 tasks:
   setup:
-    command: "west update"
+    command: "uv run west update"
     description: "Update all west modules for the Benji RT application"
