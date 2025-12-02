@@ -13,24 +13,25 @@ jobs:
       - name: Checkout 🛎️
         uses: actions/checkout@v4
 
-      - name: Setup Moon Toolchain 🛠️
-        uses: "moonrepo/setup-toolchain@v0"
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
 
-      - name: "Set up Python"
-        uses: actions/setup-python@v6
+      - name: Build doc container 🐳
+        uses: docker/build-push-action@v6
         with:
-          python-version-file: "pyproject.toml"
+          context: .
+          file: docker/doc/Dockerfile
+          tags: benji-doc:latest
+          load: true
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
-      - name: Install uv
-        uses: astral-sh/setup-uv@v6
-        with:
-          enable-cache: true
+      - name: Build docs 🔧
+        run: |
+          docker run --rm -v ${{ github.workspace }}/doc:/workspace benji-doc:latest -M html . _build
 
-      - name: Install the project
-        run: uv sync --locked --all-extras --dev
-
-      - name: Build 🔧
-        run: moon run doc:build
+      - name: Add .nojekyll file
+        run: touch doc/_build/html/.nojekyll
 
       - name: Deploy 🚀
         uses: JamesIves/github-pages-deploy-action@v4
