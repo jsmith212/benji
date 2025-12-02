@@ -1,0 +1,463 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Reference Trajectories &mdash; Benji Documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=03e43079" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../../_static/graphviz.css?v=4ae1632d" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/custom.css?v=cc9a7e1f" />
+      <link rel="stylesheet" type="text/css" href="../../_static/nbsphinx-code-cells.css?v=2aa19091" />
+
+  
+      <script src="../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script type="module" src="../../_static/js/custom.js?v=13a5d2d9"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+      <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+      <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="Controllers" href="Controllers.html" />
+    <link rel="prev" title="Controllers" href="../controllers.html" />
+  <meta name="color-scheme" content="dark light">
+  
+  <noscript id="dark-mode-toggle-stylesheets">
+    <link rel="stylesheet" href="../../_static/css/light.css" type="text/css" media="(prefers-color-scheme: light)"/>
+    <link rel="stylesheet" href="../../_static/css/dark.css" type="text/css" media="(prefers-color-scheme: dark)"/>
+  </noscript>
+  <script src="../../_static/js/dark-mode-toggle-stylesheets-loader.min.js"></script>
+  <script type="module" src="../../_static/js/dark-mode-toggle.min.mjs"></script>
+
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            Benji
+          </a>
+<div class="search-container" role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="search" name="q" placeholder="Search docs"
+           aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+  <div data-nosnippet>
+    
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../architecture/index.html">Architecture</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../index.html">Guidance, Navigation, and Control</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../index.html#system-overview">System Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../index.html#notation">Notation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../index.html#control-architecture">Control Architecture</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../index.html#theory">Theory</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="../index.html#implementation">Implementation</a><ul class="current">
+<li class="toctree-l3 current"><a class="current reference internal" href="#">Reference Trajectories</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#Control-Decomposition">Control Decomposition</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#Physically-Realizable-Trajectories">Physically Realizable Trajectories</a><ul>
+<li class="toctree-l5"><a class="reference internal" href="#The-Turn-Problem">The Turn Problem</a></li>
+</ul>
+</li>
+<li class="toctree-l4"><a class="reference internal" href="#Trajectory-Generation">Trajectory Generation</a><ul>
+<li class="toctree-l5"><a class="reference internal" href="#Turn-in-Place-Kinematics">Turn-in-Place Kinematics</a></li>
+</ul>
+</li>
+<li class="toctree-l4"><a class="reference internal" href="#Feedforward-Computation">Feedforward Computation</a><ul>
+<li class="toctree-l5"><a class="reference internal" href="#Steady-State-Feedforward">Steady-State Feedforward</a></li>
+<li class="toctree-l5"><a class="reference internal" href="#Dynamic-Feedforward">Dynamic Feedforward</a></li>
+</ul>
+</li>
+<li class="toctree-l4"><a class="reference internal" href="#Summary">Summary</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="Controllers.html">Controllers</a></li>
+<li class="toctree-l3"><a class="reference internal" href="Multi-Rate%20Sensor%20Fusion.html">Multi-Rate Sensor Fusion</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../hardware/index.html">Hardware</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../projects/index.html">Projects</a></li>
+</ul>
+
+    
+  </div>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">Benji</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+  <!--  -->
+  
+  
+  
+  
+
+  <li><a href="../../index.html">Docs</a> &raquo;</li>
+  
+     <li><a href="../index.html">Guidance, Navigation, and Control</a> &raquo;</li>
+  
+  <li>Reference Trajectories</li>
+
+
+  <li class="wy-breadcrumbs-aside">
+    <dark-mode-toggle id="dark-mode-toggle" appearance="toggle" permanent="true"/>
+  </li>
+  <li class="wy-breadcrumbs-aside">
+  </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="Reference-Trajectories">
+<h1>Reference Trajectories<a class="headerlink" href="#Reference-Trajectories" title="Link to this heading"></a></h1>
+<p>This notebook covers the generation of smooth, physically realizable reference trajectories for the tank drive robot. A key insight: <strong>the reference trajectory must satisfy the robot dynamics</strong>, otherwise no controller can track it.</p>
+<section id="Control-Decomposition">
+<h2>Control Decomposition<a class="headerlink" href="#Control-Decomposition" title="Link to this heading"></a></h2>
+<p>For trajectory tracking, control is decomposed into:</p>
+<div class="math notranslate nohighlight">
+\[\mathbf{u} = \mathbf{u}_{ref} + \mathbf{u}_{fb}\]</div>
+<ul class="simple">
+<li><p><span class="math notranslate nohighlight">\(\mathbf{u}_{ref}\)</span>: <strong>Feedforward</strong> — the control required to execute the reference trajectory</p></li>
+<li><p><span class="math notranslate nohighlight">\(\mathbf{u}_{fb}\)</span>: <strong>Feedback</strong> — corrects deviations from the reference</p></li>
+</ul>
+<p>The feedforward term is computed from the reference trajectory itself. Without it, the controller must constantly “catch up” to a moving target, resulting in persistent tracking error.</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[1]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">generate_smooth_reference_trajectory</span><span class="p">,</span> <span class="n">angle_wrap</span>
+</pre></div>
+</div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Robot parameters</span>
+<span class="n">L</span> <span class="o">=</span> <span class="mf">0.14</span>        <span class="c1"># wheelbase [m]</span>
+<span class="n">tau</span> <span class="o">=</span> <span class="mf">0.2</span>       <span class="c1"># motor time constant [s]</span>
+<span class="n">v_cruise</span> <span class="o">=</span> <span class="mf">0.25</span> <span class="c1"># cruise speed [m/s]</span>
+<span class="n">u_max</span> <span class="o">=</span> <span class="mf">0.5</span>     <span class="c1"># max wheel command [m/s]</span>
+
+<span class="c1"># Simulation parameters</span>
+<span class="n">T_final</span> <span class="o">=</span> <span class="mf">60.0</span>
+<span class="n">dt</span> <span class="o">=</span> <span class="mf">0.05</span>       <span class="c1"># 20 Hz</span>
+<span class="n">t</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">T_final</span><span class="p">,</span> <span class="n">dt</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Robot: L=</span><span class="si">{</span><span class="n">L</span><span class="o">*</span><span class="mi">100</span><span class="si">:</span><span class="s2">.0f</span><span class="si">}</span><span class="s2">cm, τ=</span><span class="si">{</span><span class="n">tau</span><span class="si">}</span><span class="s2">s&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Simulation: </span><span class="si">{</span><span class="n">T_final</span><span class="si">}</span><span class="s2">s at </span><span class="si">{</span><span class="mi">1</span><span class="o">/</span><span class="n">dt</span><span class="si">:</span><span class="s2">.0f</span><span class="si">}</span><span class="s2">Hz (</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">t</span><span class="p">)</span><span class="si">}</span><span class="s2"> steps)&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Robot: L=14cm, τ=0.2s
+Simulation: 60.0s at 20Hz (1200 steps)
+</pre></div></div>
+</div>
+</section>
+<section id="Physically-Realizable-Trajectories">
+<h2>Physically Realizable Trajectories<a class="headerlink" href="#Physically-Realizable-Trajectories" title="Link to this heading"></a></h2>
+<p>A trajectory is realizable if it satisfies:</p>
+<ol class="arabic simple">
+<li><p><strong>Kinematic constraints</strong>: Heading must be consistent with velocity direction (for forward motion)</p></li>
+<li><p><strong>Dynamic constraints</strong>: Wheel velocities cannot change instantaneously (motor dynamics)</p></li>
+<li><p><strong>Actuator limits</strong>: Wheel commands must stay within <span class="math notranslate nohighlight">\([-u_{max}, u_{max}]\)</span></p></li>
+</ol>
+<section id="The-Turn-Problem">
+<h3>The Turn Problem<a class="headerlink" href="#The-Turn-Problem" title="Link to this heading"></a></h3>
+<p>Consider a waypoint trajectory that changes heading by 90°. If we simply interpolate positions, the heading must change <strong>instantaneously</strong> at the waypoint — requiring infinite angular velocity.</p>
+<p>Solution: Include explicit <strong>turn phases</strong> where the robot adjusts heading while stationary or moving slowly.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Define waypoints for a multi-segment trajectory</span>
+<span class="n">waypoints</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span>
+    <span class="p">[</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">],</span>
+    <span class="p">[</span><span class="mf">3.0</span><span class="p">,</span> <span class="mf">3.0</span><span class="p">],</span>   <span class="c1"># 45° heading</span>
+    <span class="p">[</span><span class="mf">6.0</span><span class="p">,</span> <span class="mf">2.0</span><span class="p">],</span>   <span class="c1"># -18° heading (turn right)</span>
+    <span class="p">[</span><span class="mf">8.0</span><span class="p">,</span> <span class="mf">5.0</span><span class="p">],</span>   <span class="c1"># 56° heading (turn left)</span>
+<span class="p">])</span>
+
+<span class="c1"># Show segment headings</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Waypoint sequence:&quot;</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">waypoints</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">):</span>
+    <span class="n">p1</span><span class="p">,</span> <span class="n">p2</span> <span class="o">=</span> <span class="n">waypoints</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">waypoints</span><span class="p">[</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">]</span>
+    <span class="n">dx</span><span class="p">,</span> <span class="n">dy</span> <span class="o">=</span> <span class="n">p2</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="n">p1</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">p2</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">p1</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+    <span class="n">heading</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">degrees</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arctan2</span><span class="p">(</span><span class="n">dy</span><span class="p">,</span> <span class="n">dx</span><span class="p">))</span>
+    <span class="n">dist</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">dx</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="n">dy</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  Segment </span><span class="si">{</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="si">}</span><span class="s2">: (</span><span class="si">{</span><span class="n">p1</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">p1</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2">) → (</span><span class="si">{</span><span class="n">p2</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">p2</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2">)  |  </span><span class="si">{</span><span class="n">heading</span><span class="si">:</span><span class="s2">+.1f</span><span class="si">}</span><span class="s2">°  |  </span><span class="si">{</span><span class="n">dist</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">m&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Waypoint sequence:
+  Segment 1: (0.0, 0.0) → (3.0, 3.0)  |  +45.0°  |  4.24m
+  Segment 2: (3.0, 3.0) → (6.0, 2.0)  |  -18.4°  |  3.16m
+  Segment 3: (6.0, 2.0) → (8.0, 5.0)  |  +56.3°  |  3.61m
+</pre></div></div>
+</div>
+</section>
+</section>
+<section id="Trajectory-Generation">
+<h2>Trajectory Generation<a class="headerlink" href="#Trajectory-Generation" title="Link to this heading"></a></h2>
+<p>The <code class="docutils literal notranslate"><span class="pre">generate_smooth_reference_trajectory</span></code> function creates trajectories with:</p>
+<ol class="arabic simple">
+<li><p><strong>Turn phases</strong>: Robot rotates in place to align with the next segment</p></li>
+<li><p><strong>Straight phases</strong>: Constant-velocity motion along each segment</p></li>
+<li><p><strong>Feedforward</strong>: Control inputs computed from the reference velocities</p></li>
+</ol>
+<section id="Turn-in-Place-Kinematics">
+<h3>Turn-in-Place Kinematics<a class="headerlink" href="#Turn-in-Place-Kinematics" title="Link to this heading"></a></h3>
+<p>For pure rotation (no translation), we need equal and opposite wheel velocities:</p>
+<div class="math notranslate nohighlight">
+\[\dot{\theta} = \frac{v_r - v_l}{L} = \omega\]</div>
+<div class="math notranslate nohighlight">
+\[v_l + v_r = 0 \quad \text{(no forward motion)}\]</div>
+<p>Solving: <span class="math notranslate nohighlight">\(v_r = \omega L / 2\)</span>, <span class="math notranslate nohighlight">\(v_l = -\omega L / 2\)</span></p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Generate smooth trajectory with turn phases</span>
+<span class="n">turn_time</span> <span class="o">=</span> <span class="mf">1.0</span>  <span class="c1"># seconds allocated for each turn</span>
+<span class="n">x_ref</span><span class="p">,</span> <span class="n">u_ref</span> <span class="o">=</span> <span class="n">generate_smooth_reference_trajectory</span><span class="p">(</span><span class="n">waypoints</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">v_cruise</span><span class="p">,</span> <span class="n">L</span><span class="p">,</span> <span class="n">tau</span><span class="p">,</span> <span class="n">turn_time</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Generated trajectory:&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  x_ref shape: </span><span class="si">{</span><span class="n">x_ref</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2"> (5 states × </span><span class="si">{</span><span class="n">x_ref</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s2"> timesteps)&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  u_ref shape: </span><span class="si">{</span><span class="n">u_ref</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2"> (2 inputs × </span><span class="si">{</span><span class="n">u_ref</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s2"> timesteps)&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Generated trajectory:
+  x_ref shape: (5, 1200) (5 states × 1200 timesteps)
+  u_ref shape: (2, 1200) (2 inputs × 1200 timesteps)
+</pre></div></div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">fig</span><span class="p">,</span> <span class="n">axes</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">12</span><span class="p">,</span> <span class="mi">10</span><span class="p">))</span>
+
+<span class="c1"># Trajectory in x-y plane</span>
+<span class="n">ax</span> <span class="o">=</span> <span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">x_ref</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="p">:],</span> <span class="n">x_ref</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="p">:],</span> <span class="s1">&#39;b-&#39;</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;Reference&#39;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">waypoints</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">waypoints</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">],</span> <span class="s1">&#39;ko&#39;</span><span class="p">,</span> <span class="n">markersize</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;Waypoints&#39;</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">wp</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">waypoints</span><span class="p">):</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">annotate</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">,</span> <span class="p">(</span><span class="n">wp</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">+</span><span class="mf">0.1</span><span class="p">,</span> <span class="n">wp</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">+</span><span class="mf">0.1</span><span class="p">),</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s1">&#39;x [m]&#39;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s1">&#39;y [m]&#39;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">axis</span><span class="p">(</span><span class="s1">&#39;equal&#39;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="kc">True</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.3</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;Reference Trajectory&#39;</span><span class="p">)</span>
+
+<span class="c1"># Heading over time</span>
+<span class="n">ax</span> <span class="o">=</span> <span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">degrees</span><span class="p">(</span><span class="n">x_ref</span><span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="p">:]),</span> <span class="s1">&#39;b-&#39;</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s1">&#39;Time [s]&#39;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s1">&#39;Heading [deg]&#39;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="kc">True</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.3</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;Reference Heading (smooth transitions)&#39;</span><span class="p">)</span>
+
+<span class="c1"># Wheel velocities</span>
+<span class="n">ax</span> <span class="o">=</span> <span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">x_ref</span><span class="p">[</span><span class="mi">3</span><span class="p">,</span> <span class="p">:],</span> <span class="s1">&#39;b-&#39;</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;$v_l$&#39;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">x_ref</span><span class="p">[</span><span class="mi">4</span><span class="p">,</span> <span class="p">:],</span> <span class="s1">&#39;r--&#39;</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;$v_r$&#39;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">axhline</span><span class="p">(</span><span class="n">v_cruise</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;k&#39;</span><span class="p">,</span> <span class="n">linestyle</span><span class="o">=</span><span class="s1">&#39;:&#39;</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;Cruise&#39;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">axhline</span><span class="p">(</span><span class="o">-</span><span class="n">v_cruise</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;k&#39;</span><span class="p">,</span> <span class="n">linestyle</span><span class="o">=</span><span class="s1">&#39;:&#39;</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.5</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s1">&#39;Time [s]&#39;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s1">&#39;Wheel velocity [m/s]&#39;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="kc">True</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.3</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;Reference Wheel Velocities&#39;</span><span class="p">)</span>
+
+<span class="c1"># Feedforward control</span>
+<span class="n">ax</span> <span class="o">=</span> <span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">u_ref</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="p">:],</span> <span class="s1">&#39;b-&#39;</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;$u_l$&#39;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">u_ref</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="p">:],</span> <span class="s1">&#39;r--&#39;</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;$u_r$&#39;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">axhline</span><span class="p">(</span><span class="n">u_max</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;k&#39;</span><span class="p">,</span> <span class="n">linestyle</span><span class="o">=</span><span class="s1">&#39;:&#39;</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.5</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">axhline</span><span class="p">(</span><span class="o">-</span><span class="n">u_max</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;k&#39;</span><span class="p">,</span> <span class="n">linestyle</span><span class="o">=</span><span class="s1">&#39;:&#39;</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.5</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s1">&#39;Time [s]&#39;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s1">&#39;Control [m/s]&#39;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="kc">True</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.3</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;Feedforward Control&#39;</span><span class="p">)</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../../_images/gnc_notebooks_Reference_Trajectories_7_0.png" src="../../_images/gnc_notebooks_Reference_Trajectories_7_0.png" />
+</div>
+</div>
+</section>
+</section>
+<section id="Feedforward-Computation">
+<h2>Feedforward Computation<a class="headerlink" href="#Feedforward-Computation" title="Link to this heading"></a></h2>
+<p>The feedforward control <span class="math notranslate nohighlight">\(\mathbf{u}_{ref}\)</span> is the input required to achieve the reference wheel velocities, accounting for motor dynamics.</p>
+<section id="Steady-State-Feedforward">
+<h3>Steady-State Feedforward<a class="headerlink" href="#Steady-State-Feedforward" title="Link to this heading"></a></h3>
+<p>From the motor dynamics <span class="math notranslate nohighlight">\(\dot{v}_l = (u_l - v_l)/\tau\)</span>, at steady state (<span class="math notranslate nohighlight">\(\dot{v}_l = 0\)</span>):</p>
+<div class="math notranslate nohighlight">
+\[u_l = v_l\]</div>
+<p>For constant-velocity motion, the feedforward equals the desired velocity.</p>
+</section>
+<section id="Dynamic-Feedforward">
+<h3>Dynamic Feedforward<a class="headerlink" href="#Dynamic-Feedforward" title="Link to this heading"></a></h3>
+<p>During velocity changes, the feedforward must account for acceleration:</p>
+<div class="math notranslate nohighlight">
+\[u_l = v_l + \tau \dot{v}_l\]</div>
+<p>For the turn-in-place phases, this is implicitly handled by setting <span class="math notranslate nohighlight">\(u_{ref}\)</span> equal to the desired turn velocities (which ramp up/down over the turn duration).</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Zoom in on a turn phase</span>
+<span class="c1"># Find a turn by looking for sign change in (v_r - v_l)</span>
+<span class="n">omega_ref</span> <span class="o">=</span> <span class="p">(</span><span class="n">x_ref</span><span class="p">[</span><span class="mi">4</span><span class="p">,</span> <span class="p">:]</span> <span class="o">-</span> <span class="n">x_ref</span><span class="p">[</span><span class="mi">3</span><span class="p">,</span> <span class="p">:])</span> <span class="o">/</span> <span class="n">L</span>  <span class="c1"># angular velocity</span>
+
+<span class="c1"># Find first significant turn</span>
+<span class="n">turn_start</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">omega_ref</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mf">0.1</span><span class="p">)</span>
+<span class="n">turn_end</span> <span class="o">=</span> <span class="n">turn_start</span> <span class="o">+</span> <span class="nb">int</span><span class="p">(</span><span class="n">turn_time</span> <span class="o">/</span> <span class="n">dt</span><span class="p">)</span> <span class="o">+</span> <span class="nb">int</span><span class="p">(</span><span class="mf">0.5</span> <span class="o">/</span> <span class="n">dt</span><span class="p">)</span>
+
+<span class="n">t_zoom</span> <span class="o">=</span> <span class="n">t</span><span class="p">[</span><span class="n">turn_start</span><span class="p">:</span><span class="n">turn_end</span><span class="p">]</span>
+
+<span class="n">fig</span><span class="p">,</span> <span class="n">axes</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">14</span><span class="p">,</span> <span class="mi">4</span><span class="p">))</span>
+
+<span class="n">ax</span> <span class="o">=</span> <span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">t_zoom</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">degrees</span><span class="p">(</span><span class="n">x_ref</span><span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="n">turn_start</span><span class="p">:</span><span class="n">turn_end</span><span class="p">]),</span> <span class="s1">&#39;b-&#39;</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s1">&#39;Time [s]&#39;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s1">&#39;Heading [deg]&#39;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="kc">True</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.3</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;Heading During Turn&#39;</span><span class="p">)</span>
+
+<span class="n">ax</span> <span class="o">=</span> <span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">t_zoom</span><span class="p">,</span> <span class="n">x_ref</span><span class="p">[</span><span class="mi">3</span><span class="p">,</span> <span class="n">turn_start</span><span class="p">:</span><span class="n">turn_end</span><span class="p">],</span> <span class="s1">&#39;b-&#39;</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;$v_l$&#39;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">t_zoom</span><span class="p">,</span> <span class="n">x_ref</span><span class="p">[</span><span class="mi">4</span><span class="p">,</span> <span class="n">turn_start</span><span class="p">:</span><span class="n">turn_end</span><span class="p">],</span> <span class="s1">&#39;r--&#39;</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;$v_r$&#39;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">axhline</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;k&#39;</span><span class="p">,</span> <span class="n">linestyle</span><span class="o">=</span><span class="s1">&#39;:&#39;</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.5</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s1">&#39;Time [s]&#39;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s1">&#39;Velocity [m/s]&#39;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="kc">True</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.3</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;Wheel Velocities (opposite for rotation)&#39;</span><span class="p">)</span>
+
+<span class="n">ax</span> <span class="o">=</span> <span class="n">axes</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">t_zoom</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">degrees</span><span class="p">(</span><span class="n">omega_ref</span><span class="p">[</span><span class="n">turn_start</span><span class="p">:</span><span class="n">turn_end</span><span class="p">]),</span> <span class="s1">&#39;g-&#39;</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s1">&#39;Time [s]&#39;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s1">&#39;$</span><span class="se">\\</span><span class="s1">dot{</span><span class="se">\\</span><span class="s1">theta}$ [deg/s]&#39;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="kc">True</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.3</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;Angular Velocity&#39;</span><span class="p">)</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../../_images/gnc_notebooks_Reference_Trajectories_9_0.png" src="../../_images/gnc_notebooks_Reference_Trajectories_9_0.png" />
+</div>
+</div>
+</section>
+</section>
+<section id="Summary">
+<h2>Summary<a class="headerlink" href="#Summary" title="Link to this heading"></a></h2>
+<p>Key points for reference trajectory generation:</p>
+<ol class="arabic simple">
+<li><p><strong>Include turn phases</strong> — instantaneous heading changes are impossible</p></li>
+<li><p><strong>Compute feedforward</strong> — the control required to execute the trajectory</p></li>
+<li><p><strong>Respect actuator limits</strong> — ensure <span class="math notranslate nohighlight">\(|u_{ref}| \leq u_{max}\)</span></p></li>
+<li><p><strong>Smooth velocity profiles</strong> — avoid step changes that motors cannot track</p></li>
+</ol>
+<p>The trajectory generator produces:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">x_ref</span></code>: Reference states <span class="math notranslate nohighlight">\([x, y, \theta, v_l, v_r]\)</span> at each timestep</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">u_ref</span></code>: Feedforward controls <span class="math notranslate nohighlight">\([u_l, u_r]\)</span> at each timestep</p></li>
+</ul>
+<p>These are used by the controllers in the <a class="reference internal" href="Controllers.html"><span class="doc">Controllers</span></a> notebook, where the full tracking control law <span class="math notranslate nohighlight">\(\mathbf{u} = \mathbf{u}_{ref} + \mathbf{u}_{fb}\)</span> is implemented.</p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+<p>
+  &#169; Copyright 2025, Cave in the Mountains.
+</p>
+
+  </div>
+
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

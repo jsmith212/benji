@@ -1,0 +1,399 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>State Estimation &mdash; Benji Documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=03e43079" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../_static/graphviz.css?v=4ae1632d" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/custom.css?v=cc9a7e1f" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script type="module" src="../_static/js/custom.js?v=13a5d2d9"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+      <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+      <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Controllers" href="controllers.html" />
+    <link rel="prev" title="Dynamics" href="dynamics.html" />
+  <meta name="color-scheme" content="dark light">
+  
+  <noscript id="dark-mode-toggle-stylesheets">
+    <link rel="stylesheet" href="../_static/css/light.css" type="text/css" media="(prefers-color-scheme: light)"/>
+    <link rel="stylesheet" href="../_static/css/dark.css" type="text/css" media="(prefers-color-scheme: dark)"/>
+  </noscript>
+  <script src="../_static/js/dark-mode-toggle-stylesheets-loader.min.js"></script>
+  <script type="module" src="../_static/js/dark-mode-toggle.min.mjs"></script>
+
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            Benji
+          </a>
+<div class="search-container" role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="search" name="q" placeholder="Search docs"
+           aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+  <div data-nosnippet>
+    
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../architecture/index.html">Architecture</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Guidance, Navigation, and Control</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="index.html#system-overview">System Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="index.html#notation">Notation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="index.html#control-architecture">Control Architecture</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="index.html#theory">Theory</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="dynamics.html">Dynamics</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">State Estimation</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#the-estimation-problem">The Estimation Problem</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#extended-kalman-filter">Extended Kalman Filter</a><ul>
+<li class="toctree-l5"><a class="reference internal" href="#predict-step">Predict Step</a></li>
+<li class="toctree-l5"><a class="reference internal" href="#update-step">Update Step</a></li>
+</ul>
+</li>
+<li class="toctree-l4"><a class="reference internal" href="#sensor-models">Sensor Models</a><ul>
+<li class="toctree-l5"><a class="reference internal" href="#imu-encoders-baseline">IMU + Encoders (Baseline)</a></li>
+<li class="toctree-l5"><a class="reference internal" href="#adding-the-accelerometer">Adding the Accelerometer</a></li>
+<li class="toctree-l5"><a class="reference internal" href="#with-camera-position-measurements">With Camera Position Measurements</a></li>
+<li class="toctree-l5"><a class="reference internal" href="#multi-rate-fusion">Multi-Rate Fusion</a></li>
+</ul>
+</li>
+<li class="toctree-l4"><a class="reference internal" href="#noise-covariances">Noise Covariances</a><ul>
+<li class="toctree-l5"><a class="reference internal" href="#process-noise-q">Process Noise <span class="math notranslate nohighlight">\(Q\)</span></a></li>
+<li class="toctree-l5"><a class="reference internal" href="#measurement-noise-r">Measurement Noise <span class="math notranslate nohighlight">\(R\)</span></a></li>
+</ul>
+</li>
+<li class="toctree-l4"><a class="reference internal" href="#position-uncertainty-growth">Position Uncertainty Growth</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#implementation-notes">Implementation Notes</a><ul>
+<li class="toctree-l5"><a class="reference internal" href="#angle-wrapping-in-innovation">Angle Wrapping in Innovation</a></li>
+<li class="toctree-l5"><a class="reference internal" href="#numerical-stability">Numerical Stability</a></li>
+<li class="toctree-l5"><a class="reference internal" href="#observability">Observability</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="controllers.html">Controllers</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="index.html#implementation">Implementation</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../hardware/index.html">Hardware</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../projects/index.html">Projects</a></li>
+</ul>
+
+    
+  </div>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Benji</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+  <!--  -->
+  
+  
+  
+  
+
+  <li><a href="../index.html">Docs</a> &raquo;</li>
+  
+     <li><a href="index.html">Guidance, Navigation, and Control</a> &raquo;</li>
+  
+  <li>State Estimation</li>
+
+
+  <li class="wy-breadcrumbs-aside">
+    <dark-mode-toggle id="dark-mode-toggle" appearance="toggle" permanent="true"/>
+  </li>
+  <li class="wy-breadcrumbs-aside">
+  </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section class="tex2jax_ignore mathjax_ignore" id="state-estimation">
+<h1>State Estimation<a class="headerlink" href="#state-estimation" title="Link to this heading"></a></h1>
+<p>This page describes the Extended Kalman Filter (EKF) used for state estimation, including the sensor models and fusion approach.</p>
+<section id="the-estimation-problem">
+<h2>The Estimation Problem<a class="headerlink" href="#the-estimation-problem" title="Link to this heading"></a></h2>
+<p>The robot state <span class="math notranslate nohighlight">\(\mathbf{x} = [x, y, \theta, v_l, v_r]^T\)</span> cannot be measured directly. We have:</p>
+<ul class="simple">
+<li><p><strong>IMU</strong>: Provides heading <span class="math notranslate nohighlight">\(\theta\)</span> (magnetometer), angular rate <span class="math notranslate nohighlight">\(\dot{\theta}\)</span> (gyroscope), and body-frame accelerations <span class="math notranslate nohighlight">\(a_x, a_y\)</span> (accelerometer)</p></li>
+<li><p><strong>Wheel encoders</strong>: Provide wheel velocities <span class="math notranslate nohighlight">\(v_l\)</span>, <span class="math notranslate nohighlight">\(v_r\)</span></p></li>
+<li><p><strong>Camera (low rate)</strong>: Provides intermittent position estimates <span class="math notranslate nohighlight">\((x, y)\)</span> at ~1-5 Hz</p></li>
+</ul>
+<p>Without direct position measurements, the filter must integrate velocity and heading to estimate position—this is <strong>dead reckoning</strong>, which drifts over time. The accelerometer helps by providing additional velocity information, while camera measurements periodically correct accumulated drift.</p>
+</section>
+<section id="extended-kalman-filter">
+<h2>Extended Kalman Filter<a class="headerlink" href="#extended-kalman-filter" title="Link to this heading"></a></h2>
+<p>The EKF handles nonlinear dynamics by linearizing about the current estimate at each timestep.</p>
+<section id="predict-step">
+<h3>Predict Step<a class="headerlink" href="#predict-step" title="Link to this heading"></a></h3>
+<p>Given the previous estimate <span class="math notranslate nohighlight">\(\hat{\mathbf{x}}_{k-1|k-1}\)</span> and covariance <span class="math notranslate nohighlight">\(P_{k-1|k-1}\)</span>, propagate using the nonlinear dynamics:</p>
+<div class="math notranslate nohighlight">
+\[\hat{\mathbf{x}}_{k|k-1} = f(\hat{\mathbf{x}}_{k-1|k-1}, \mathbf{u}_{k-1})\]</div>
+<p>Compute the Jacobian at the current estimate:</p>
+<div class="math notranslate nohighlight">
+\[F_k = \left.\frac{\partial f}{\partial \mathbf{x}}\right|_{\hat{\mathbf{x}}_{k-1|k-1}}\]</div>
+<p>Propagate the covariance:</p>
+<div class="math notranslate nohighlight">
+\[P_{k|k-1} = F_k P_{k-1|k-1} F_k^T + Q\]</div>
+<p>where <span class="math notranslate nohighlight">\(Q\)</span> is the process noise covariance.</p>
+</section>
+<section id="update-step">
+<h3>Update Step<a class="headerlink" href="#update-step" title="Link to this heading"></a></h3>
+<p>Given measurement <span class="math notranslate nohighlight">\(\mathbf{y}_k\)</span> with measurement model <span class="math notranslate nohighlight">\(h(\mathbf{x})\)</span>:</p>
+<p><strong>Innovation:</strong></p>
+<div class="math notranslate nohighlight">
+\[\tilde{\mathbf{y}}_k = \mathbf{y}_k - h(\hat{\mathbf{x}}_{k|k-1})\]</div>
+<p><strong>Kalman gain:</strong></p>
+<div class="math notranslate nohighlight">
+\[K_k = P_{k|k-1} H_k^T (H_k P_{k|k-1} H_k^T + R)^{-1}\]</div>
+<p>where <span class="math notranslate nohighlight">\(H_k = \partial h / \partial \mathbf{x}\)</span> is the measurement Jacobian and <span class="math notranslate nohighlight">\(R\)</span> is the measurement noise covariance.</p>
+<p><strong>State update:</strong></p>
+<div class="math notranslate nohighlight">
+\[\hat{\mathbf{x}}_{k|k} = \hat{\mathbf{x}}_{k|k-1} + K_k \tilde{\mathbf{y}}_k\]</div>
+<p><strong>Covariance update:</strong></p>
+<div class="math notranslate nohighlight">
+\[P_{k|k} = (I - K_k H_k) P_{k|k-1}\]</div>
+</section>
+</section>
+<section id="sensor-models">
+<h2>Sensor Models<a class="headerlink" href="#sensor-models" title="Link to this heading"></a></h2>
+<section id="imu-encoders-baseline">
+<h3>IMU + Encoders (Baseline)<a class="headerlink" href="#imu-encoders-baseline" title="Link to this heading"></a></h3>
+<p>The baseline measurement vector is:</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}\mathbf{y} = \begin{bmatrix} \theta \\ \dot{\theta} \\ v_l \\ v_r \end{bmatrix} = \begin{bmatrix} \theta \\ (v_r - v_l)/L \\ v_l \\ v_r \end{bmatrix}\end{split}\]</div>
+<p>The measurement matrix (linear in state):</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}
+H = \begin{bmatrix}
+0 &amp; 0 &amp; 1 &amp; 0 &amp; 0 \\
+0 &amp; 0 &amp; 0 &amp; -1/L &amp; 1/L \\
+0 &amp; 0 &amp; 0 &amp; 1 &amp; 0 \\
+0 &amp; 0 &amp; 0 &amp; 0 &amp; 1
+\end{bmatrix}
+\end{split}\]</div>
+<p>Position <span class="math notranslate nohighlight">\((x, y)\)</span> is not directly measured. The filter must infer position from velocity integration, leading to unbounded uncertainty growth.</p>
+</section>
+<section id="adding-the-accelerometer">
+<h3>Adding the Accelerometer<a class="headerlink" href="#adding-the-accelerometer" title="Link to this heading"></a></h3>
+<p>The accelerometer measures body-frame linear accelerations <span class="math notranslate nohighlight">\((a_x^b, a_y^b)\)</span>. For a tank drive robot, these relate to the state as:</p>
+<div class="math notranslate nohighlight">
+\[a_x^b = \dot{v}_{avg} = \frac{\dot{v}_l + \dot{v}_r}{2} = \frac{1}{2\tau}\left((u_l - v_l) + (u_r - v_r)\right)\]</div>
+<div class="math notranslate nohighlight">
+\[a_y^b = v_{avg} \cdot \dot{\theta} = \frac{v_l + v_r}{2} \cdot \frac{v_r - v_l}{L}\]</div>
+<p>The centripetal acceleration <span class="math notranslate nohighlight">\(a_y^b\)</span> arises from the robot turning. With the accelerometer, the measurement vector becomes:</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}\mathbf{y}_{accel} = \begin{bmatrix} \theta \\ \dot{\theta} \\ v_l \\ v_r \\ a_x^b \\ a_y^b \end{bmatrix}\end{split}\]</div>
+<p>The measurement is <strong>nonlinear</strong> in the state due to the centripetal term. The measurement Jacobian is:</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}
+H_{accel} = \begin{bmatrix}
+0 &amp; 0 &amp; 1 &amp; 0 &amp; 0 \\
+0 &amp; 0 &amp; 0 &amp; -1/L &amp; 1/L \\
+0 &amp; 0 &amp; 0 &amp; 1 &amp; 0 \\
+0 &amp; 0 &amp; 0 &amp; 0 &amp; 1 \\
+0 &amp; 0 &amp; 0 &amp; -1/(2\tau) &amp; -1/(2\tau) \\
+0 &amp; 0 &amp; 0 &amp; \frac{\partial a_y^b}{\partial v_l} &amp; \frac{\partial a_y^b}{\partial v_r}
+\end{bmatrix}
+\end{split}\]</div>
+<p>where the centripetal acceleration partial derivatives are:</p>
+<div class="math notranslate nohighlight">
+\[\frac{\partial a_y^b}{\partial v_l} = \frac{1}{2L}(v_r - 2v_l), \quad \frac{\partial a_y^b}{\partial v_r} = \frac{1}{2L}(2v_r - v_l)\]</div>
+<p><strong>Benefit:</strong> The accelerometer provides redundant velocity information. When wheel slip occurs (encoders report incorrect velocities), the accelerometer can detect the discrepancy.</p>
+</section>
+<section id="with-camera-position-measurements">
+<h3>With Camera Position Measurements<a class="headerlink" href="#with-camera-position-measurements" title="Link to this heading"></a></h3>
+<p>When camera position measurements are available (typically at lower rate, ~1-5 Hz):</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}\mathbf{y}_{camera} = \begin{bmatrix} x \\ y \end{bmatrix}\end{split}\]</div>
+<div class="math notranslate nohighlight">
+\[\begin{split}
+H_{camera} = \begin{bmatrix}
+1 &amp; 0 &amp; 0 &amp; 0 &amp; 0 \\
+0 &amp; 1 &amp; 0 &amp; 0 &amp; 0
+\end{bmatrix}
+\end{split}\]</div>
+<p>Position measurements bound the uncertainty, preventing drift.</p>
+</section>
+<section id="multi-rate-fusion">
+<h3>Multi-Rate Fusion<a class="headerlink" href="#multi-rate-fusion" title="Link to this heading"></a></h3>
+<p>Different sensors operate at different rates:</p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Sensor</p></th>
+<th class="head"><p>Typical Rate</p></th>
+<th class="head"><p>Latency</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>IMU (gyro, accel)</p></td>
+<td><p>100-400 Hz</p></td>
+<td><p>&lt; 1 ms</p></td>
+</tr>
+<tr class="row-odd"><td><p>Wheel encoders</p></td>
+<td><p>20-100 Hz</p></td>
+<td><p>&lt; 1 ms</p></td>
+</tr>
+<tr class="row-even"><td><p>Camera position</p></td>
+<td><p>1-10 Hz</p></td>
+<td><p>50-200 ms</p></td>
+</tr>
+</tbody>
+</table>
+<p>The EKF naturally handles multi-rate measurements:</p>
+<ol class="arabic simple">
+<li><p><strong>Predict</strong> at the highest rate (every control cycle, typically 20-50 Hz)</p></li>
+<li><p><strong>Update</strong> with IMU/encoder data at their native rate</p></li>
+<li><p><strong>Update</strong> with camera data when available (asynchronous)</p></li>
+</ol>
+<p>Each update uses the appropriate measurement model (<span class="math notranslate nohighlight">\(H\)</span>, <span class="math notranslate nohighlight">\(R\)</span> matrices). See the <a class="reference internal" href="notebooks/Multi-Rate%20Sensor%20Fusion.html"><span class="std std-doc">Multi-Rate Sensor Fusion</span></a> notebook for implementation details.</p>
+</section>
+</section>
+<section id="noise-covariances">
+<h2>Noise Covariances<a class="headerlink" href="#noise-covariances" title="Link to this heading"></a></h2>
+<section id="process-noise-q">
+<h3>Process Noise <span class="math notranslate nohighlight">\(Q\)</span><a class="headerlink" href="#process-noise-q" title="Link to this heading"></a></h3>
+<p>Process noise accounts for unmodeled dynamics and discretization errors. Typical structure:</p>
+<div class="math notranslate nohighlight">
+\[Q = \text{diag}(\sigma_x^2, \sigma_y^2, \sigma_\theta^2, \sigma_{v_l}^2, \sigma_{v_r}^2)\]</div>
+<p>where:</p>
+<ul class="simple">
+<li><p>Position noise <span class="math notranslate nohighlight">\(\sigma_x, \sigma_y \sim 10^{-5}\)</span> m² (small, dynamics are well-modeled)</p></li>
+<li><p>Heading noise <span class="math notranslate nohighlight">\(\sigma_\theta \sim 10^{-6}\)</span> rad²</p></li>
+<li><p>Velocity noise <span class="math notranslate nohighlight">\(\sigma_{v_l}, \sigma_{v_r} \sim 10^{-4}\)</span> (m/s)² (motor disturbances)</p></li>
+</ul>
+</section>
+<section id="measurement-noise-r">
+<h3>Measurement Noise <span class="math notranslate nohighlight">\(R\)</span><a class="headerlink" href="#measurement-noise-r" title="Link to this heading"></a></h3>
+<p>Measurement noise reflects sensor accuracy:</p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Sensor</p></th>
+<th class="head"><p>Typical <span class="math notranslate nohighlight">\(\sigma\)</span></p></th>
+<th class="head"><p>Notes</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Magnetometer (θ)</p></td>
+<td><p>0.03 rad (~2°)</p></td>
+<td><p>Subject to magnetic interference</p></td>
+</tr>
+<tr class="row-odd"><td><p>Gyroscope (θ̇)</p></td>
+<td><p>0.01 rad/s</p></td>
+<td><p>Bias drift over time</p></td>
+</tr>
+<tr class="row-even"><td><p>Accelerometer</p></td>
+<td><p>0.1 m/s²</p></td>
+<td><p>Bias, vibration-sensitive</p></td>
+</tr>
+<tr class="row-odd"><td><p>Wheel encoders</p></td>
+<td><p>0.03 m/s</p></td>
+<td><p>Slip, quantization</p></td>
+</tr>
+<tr class="row-even"><td><p>Camera (x, y)</p></td>
+<td><p>0.05 m</p></td>
+<td><p>Environment-dependent, latency</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+<section id="position-uncertainty-growth">
+<h2>Position Uncertainty Growth<a class="headerlink" href="#position-uncertainty-growth" title="Link to this heading"></a></h2>
+<p>Without position measurements, the EKF’s position uncertainty grows without bound. The growth rate depends on:</p>
+<ol class="arabic simple">
+<li><p><strong>Heading uncertainty</strong>: Small heading errors compound into large position errors over distance traveled</p></li>
+<li><p><strong>Velocity uncertainty</strong>: Integrates directly into position</p></li>
+<li><p><strong>Process noise</strong>: Adds uncertainty each timestep</p></li>
+</ol>
+<p>For indoor navigation, position measurements every few seconds are typically sufficient to bound uncertainty to acceptable levels.</p>
+</section>
+<section id="implementation-notes">
+<h2>Implementation Notes<a class="headerlink" href="#implementation-notes" title="Link to this heading"></a></h2>
+<section id="angle-wrapping-in-innovation">
+<h3>Angle Wrapping in Innovation<a class="headerlink" href="#angle-wrapping-in-innovation" title="Link to this heading"></a></h3>
+<p>The heading innovation must be wrapped:</p>
+<div class="math notranslate nohighlight">
+\[\tilde{\theta} = \text{wrap}(\theta_{measured} - \theta_{predicted})\]</div>
+</section>
+<section id="numerical-stability">
+<h3>Numerical Stability<a class="headerlink" href="#numerical-stability" title="Link to this heading"></a></h3>
+<p>The Joseph form of the covariance update is more numerically stable:</p>
+<div class="math notranslate nohighlight">
+\[P_{k|k} = (I - K_k H_k) P_{k|k-1} (I - K_k H_k)^T + K_k R K_k^T\]</div>
+</section>
+<section id="observability">
+<h3>Observability<a class="headerlink" href="#observability" title="Link to this heading"></a></h3>
+<p>The system is <strong>not observable</strong> from IMU/encoder measurements alone—position is unobservable. The filter will estimate velocity and heading accurately, but position will drift. Adding even occasional position measurements makes the full state observable.</p>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+<p>
+  &#169; Copyright 2025, Cave in the Mountains.
+</p>
+
+  </div>
+
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

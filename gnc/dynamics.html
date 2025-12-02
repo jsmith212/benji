@@ -1,0 +1,276 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dynamics &mdash; Benji Documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=03e43079" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../_static/graphviz.css?v=4ae1632d" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/custom.css?v=cc9a7e1f" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script type="module" src="../_static/js/custom.js?v=13a5d2d9"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+      <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+      <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="State Estimation" href="state-estimation.html" />
+    <link rel="prev" title="Guidance, Navigation, and Control" href="index.html" />
+  <meta name="color-scheme" content="dark light">
+  
+  <noscript id="dark-mode-toggle-stylesheets">
+    <link rel="stylesheet" href="../_static/css/light.css" type="text/css" media="(prefers-color-scheme: light)"/>
+    <link rel="stylesheet" href="../_static/css/dark.css" type="text/css" media="(prefers-color-scheme: dark)"/>
+  </noscript>
+  <script src="../_static/js/dark-mode-toggle-stylesheets-loader.min.js"></script>
+  <script type="module" src="../_static/js/dark-mode-toggle.min.mjs"></script>
+
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            Benji
+          </a>
+<div class="search-container" role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="search" name="q" placeholder="Search docs"
+           aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+  <div data-nosnippet>
+    
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../architecture/index.html">Architecture</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Guidance, Navigation, and Control</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="index.html#system-overview">System Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="index.html#notation">Notation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="index.html#control-architecture">Control Architecture</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="index.html#theory">Theory</a><ul class="current">
+<li class="toctree-l3 current"><a class="current reference internal" href="#">Dynamics</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#nonlinear-equations-of-motion">Nonlinear Equations of Motion</a><ul>
+<li class="toctree-l5"><a class="reference internal" href="#kinematics">Kinematics</a></li>
+<li class="toctree-l5"><a class="reference internal" href="#motor-dynamics">Motor Dynamics</a></li>
+<li class="toctree-l5"><a class="reference internal" href="#compact-form">Compact Form</a></li>
+</ul>
+</li>
+<li class="toctree-l4"><a class="reference internal" href="#error-dynamics-formulation">Error Dynamics Formulation</a><ul>
+<li class="toctree-l5"><a class="reference internal" href="#tracking-error">Tracking Error</a></li>
+<li class="toctree-l5"><a class="reference internal" href="#linearized-error-dynamics">Linearized Error Dynamics</a></li>
+</ul>
+</li>
+<li class="toctree-l4"><a class="reference internal" href="#discrete-time-dynamics">Discrete-Time Dynamics</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#control-law-structure">Control Law Structure</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#angle-wrapping">Angle Wrapping</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="state-estimation.html">State Estimation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="controllers.html">Controllers</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="index.html#implementation">Implementation</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../hardware/index.html">Hardware</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../projects/index.html">Projects</a></li>
+</ul>
+
+    
+  </div>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Benji</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+  <!--  -->
+  
+  
+  
+  
+
+  <li><a href="../index.html">Docs</a> &raquo;</li>
+  
+     <li><a href="index.html">Guidance, Navigation, and Control</a> &raquo;</li>
+  
+  <li>Dynamics</li>
+
+
+  <li class="wy-breadcrumbs-aside">
+    <dark-mode-toggle id="dark-mode-toggle" appearance="toggle" permanent="true"/>
+  </li>
+  <li class="wy-breadcrumbs-aside">
+  </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section class="tex2jax_ignore mathjax_ignore" id="dynamics">
+<h1>Dynamics<a class="headerlink" href="#dynamics" title="Link to this heading"></a></h1>
+<p>This page derives the equations of motion for the tank drive robot and formulates the error dynamics used for trajectory tracking control.</p>
+<section id="nonlinear-equations-of-motion">
+<h2>Nonlinear Equations of Motion<a class="headerlink" href="#nonlinear-equations-of-motion" title="Link to this heading"></a></h2>
+<p>The robot state is <span class="math notranslate nohighlight">\(\mathbf{x} = [x, y, \theta, v_l, v_r]^T\)</span> where <span class="math notranslate nohighlight">\((x, y)\)</span> is position, <span class="math notranslate nohighlight">\(\theta\)</span> is heading, and <span class="math notranslate nohighlight">\((v_l, v_r)\)</span> are left/right wheel velocities. The control input is commanded wheel velocities <span class="math notranslate nohighlight">\(\mathbf{u} = [u_l, u_r]^T\)</span>.</p>
+<section id="kinematics">
+<h3>Kinematics<a class="headerlink" href="#kinematics" title="Link to this heading"></a></h3>
+<p>The position and heading evolve according to standard differential drive kinematics:</p>
+<div class="math notranslate nohighlight">
+\[\dot{x} = \frac{v_l + v_r}{2} \cos\theta\]</div>
+<div class="math notranslate nohighlight">
+\[\dot{y} = \frac{v_l + v_r}{2} \sin\theta\]</div>
+<div class="math notranslate nohighlight">
+\[\dot{\theta} = \frac{v_r - v_l}{L}\]</div>
+<p>where <span class="math notranslate nohighlight">\(L\)</span> is the wheelbase (distance between wheel centers).</p>
+</section>
+<section id="motor-dynamics">
+<h3>Motor Dynamics<a class="headerlink" href="#motor-dynamics" title="Link to this heading"></a></h3>
+<p>The wheel velocities follow first-order dynamics with time constant <span class="math notranslate nohighlight">\(\tau\)</span>:</p>
+<div class="math notranslate nohighlight">
+\[\dot{v}_l = \frac{u_l - v_l}{\tau}\]</div>
+<div class="math notranslate nohighlight">
+\[\dot{v}_r = \frac{u_r - v_r}{\tau}\]</div>
+<p>This captures the lag between commanded and actual wheel velocities due to motor and drivetrain inertia.</p>
+</section>
+<section id="compact-form">
+<h3>Compact Form<a class="headerlink" href="#compact-form" title="Link to this heading"></a></h3>
+<p>In vector notation:</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}\dot{\mathbf{x}} = f(\mathbf{x}, \mathbf{u}) = \begin{bmatrix} \frac{v_l + v_r}{2} \cos\theta \\ \frac{v_l + v_r}{2} \sin\theta \\ \frac{v_r - v_l}{L} \\ \frac{u_l - v_l}{\tau} \\ \frac{u_r - v_r}{\tau} \end{bmatrix}\end{split}\]</div>
+</section>
+</section>
+<section id="error-dynamics-formulation">
+<h2>Error Dynamics Formulation<a class="headerlink" href="#error-dynamics-formulation" title="Link to this heading"></a></h2>
+<p>For trajectory tracking, we must rely on error dynamics and relinearization about a time-varying reference <span class="math notranslate nohighlight">\(\mathbf{x}_{ref}(t)\)</span>.</p>
+<section id="tracking-error">
+<h3>Tracking Error<a class="headerlink" href="#tracking-error" title="Link to this heading"></a></h3>
+<p>Define the error state:</p>
+<div class="math notranslate nohighlight">
+\[\mathbf{e} = \mathbf{x} - \mathbf{x}_{ref}\]</div>
+<p>The reference trajectory must satisfy the dynamics (it must be physically realizable):</p>
+<div class="math notranslate nohighlight">
+\[\dot{\mathbf{x}}_{ref} = f(\mathbf{x}_{ref}, \mathbf{u}_{ref})\]</div>
+<p>where <span class="math notranslate nohighlight">\(\mathbf{u}_{ref}\)</span> is the feedforward control, which is the input required to execute the reference trajectory.</p>
+</section>
+<section id="linearized-error-dynamics">
+<h3>Linearized Error Dynamics<a class="headerlink" href="#linearized-error-dynamics" title="Link to this heading"></a></h3>
+<p>Taylor expanding about the reference and subtracting the reference dynamics yields:</p>
+<div class="math notranslate nohighlight">
+\[\dot{\mathbf{e}} = A(\mathbf{x}_{ref}) \mathbf{e} + B \delta\mathbf{u}\]</div>
+<p>where <span class="math notranslate nohighlight">\(\delta\mathbf{u} = \mathbf{u} - \mathbf{u}_{ref}\)</span> is the feedback correction.</p>
+<p>The Jacobian <span class="math notranslate nohighlight">\(A = \partial f / \partial \mathbf{x}\)</span> evaluated at the reference state is:</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}
+A = \begin{bmatrix}
+0 &amp; 0 &amp; -\bar{v}\sin\theta_{ref} &amp; \frac{1}{2}\cos\theta_{ref} &amp; \frac{1}{2}\cos\theta_{ref} \\[0.5em]
+0 &amp; 0 &amp; \bar{v}\cos\theta_{ref} &amp; \frac{1}{2}\sin\theta_{ref} &amp; \frac{1}{2}\sin\theta_{ref} \\[0.5em]
+0 &amp; 0 &amp; 0 &amp; -\frac{1}{L} &amp; \frac{1}{L} \\[0.5em]
+0 &amp; 0 &amp; 0 &amp; -\frac{1}{\tau} &amp; 0 \\[0.5em]
+0 &amp; 0 &amp; 0 &amp; 0 &amp; -\frac{1}{\tau}
+\end{bmatrix}
+\end{split}\]</div>
+<p>where <span class="math notranslate nohighlight">\(\bar{v} = (v_{l,ref} + v_{r,ref})/2\)</span> is the reference forward velocity.</p>
+<p>The input Jacobian <span class="math notranslate nohighlight">\(B = \partial f / \partial \mathbf{u}\)</span> is constant:</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}
+B = \begin{bmatrix}
+0 &amp; 0 \\ 0 &amp; 0 \\ 0 &amp; 0 \\ \frac{1}{\tau} &amp; 0 \\ 0 &amp; \frac{1}{\tau}
+\end{bmatrix}
+\end{split}\]</div>
+</section>
+</section>
+<section id="discrete-time-dynamics">
+<h2>Discrete-Time Dynamics<a class="headerlink" href="#discrete-time-dynamics" title="Link to this heading"></a></h2>
+<p>For implementation, we discretize using zero-order hold on the input. Given continuous-time system <span class="math notranslate nohighlight">\((A_c, B_c)\)</span> and timestep <span class="math notranslate nohighlight">\(\Delta t\)</span>:</p>
+<div class="math notranslate nohighlight">
+\[A_d = I + A_c \Delta t + \frac{(A_c \Delta t)^2}{2!} + \cdots \approx e^{A_c \Delta t}\]</div>
+<div class="math notranslate nohighlight">
+\[B_d = \left(\int_0^{\Delta t} e^{A_c \tau} d\tau\right) B_c \approx \Delta t \cdot B_c\]</div>
+<p>For small <span class="math notranslate nohighlight">\(\Delta t\)</span>, the first-order approximation <span class="math notranslate nohighlight">\(A_d \approx I + A_c \Delta t\)</span> and <span class="math notranslate nohighlight">\(B_d \approx \Delta t \cdot B_c\)</span> is often sufficient.</p>
+<p>The discrete-time error dynamics become:</p>
+<div class="math notranslate nohighlight">
+\[\mathbf{e}_{k+1} = A_d \mathbf{e}_k + B_d \delta\mathbf{u}_k\]</div>
+</section>
+<section id="control-law-structure">
+<h2>Control Law Structure<a class="headerlink" href="#control-law-structure" title="Link to this heading"></a></h2>
+<p>The trajectory tracking control law decomposes into feedforward and feedback:</p>
+<div class="math notranslate nohighlight">
+\[\mathbf{u} = \mathbf{u}_{ref} + \delta\mathbf{u}\]</div>
+<p>The feedforward <span class="math notranslate nohighlight">\(\mathbf{u}_{ref}\)</span> comes from the reference trajectory (see <a class="reference internal" href="notebooks/Reference%20Trajectories.html"><span class="std std-doc">Reference Trajectories</span></a>). The feedback <span class="math notranslate nohighlight">\(\delta\mathbf{u}\)</span> corrects deviations using one of:</p>
+<ul class="simple">
+<li><p><strong>LQR</strong>: <span class="math notranslate nohighlight">\(\delta\mathbf{u} = -K \mathbf{e}\)</span></p></li>
+<li><p><strong>MPC</strong>: solve optimization over prediction horizon</p></li>
+</ul>
+<p>See <a class="reference internal" href="notebooks/Controllers.html"><span class="std std-doc">Controllers</span></a> for implementation details.</p>
+</section>
+<section id="angle-wrapping">
+<h2>Angle Wrapping<a class="headerlink" href="#angle-wrapping" title="Link to this heading"></a></h2>
+<p>The heading error <span class="math notranslate nohighlight">\(e_\theta = \theta - \theta_{ref}\)</span> must be wrapped to <span class="math notranslate nohighlight">\([-\pi, \pi]\)</span> to avoid discontinuities:</p>
+<div class="math notranslate nohighlight">
+\[e_\theta = \text{atan2}(\sin(\theta - \theta_{ref}), \cos(\theta - \theta_{ref}))\]</div>
+<p>or equivalently:</p>
+<div class="math notranslate nohighlight">
+\[e_\theta = ((\theta - \theta_{ref}) + \pi) \mod 2\pi - \pi\]</div>
+<p>This is critical for correct controller behavior near <span class="math notranslate nohighlight">\(\theta = \pm\pi\)</span>.</p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+<p>
+  &#169; Copyright 2025, Cave in the Mountains.
+</p>
+
+  </div>
+
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

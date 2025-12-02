@@ -1,0 +1,435 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Controllers &mdash; Benji Documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=03e43079" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../_static/graphviz.css?v=4ae1632d" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/custom.css?v=cc9a7e1f" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script type="module" src="../_static/js/custom.js?v=13a5d2d9"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+      <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+      <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Reference Trajectories" href="notebooks/Reference%20Trajectories.html" />
+    <link rel="prev" title="State Estimation" href="state-estimation.html" />
+  <meta name="color-scheme" content="dark light">
+  
+  <noscript id="dark-mode-toggle-stylesheets">
+    <link rel="stylesheet" href="../_static/css/light.css" type="text/css" media="(prefers-color-scheme: light)"/>
+    <link rel="stylesheet" href="../_static/css/dark.css" type="text/css" media="(prefers-color-scheme: dark)"/>
+  </noscript>
+  <script src="../_static/js/dark-mode-toggle-stylesheets-loader.min.js"></script>
+  <script type="module" src="../_static/js/dark-mode-toggle.min.mjs"></script>
+
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            Benji
+          </a>
+<div class="search-container" role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="search" name="q" placeholder="Search docs"
+           aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+  <div data-nosnippet>
+    
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../architecture/index.html">Architecture</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Guidance, Navigation, and Control</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="index.html#system-overview">System Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="index.html#notation">Notation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="index.html#control-architecture">Control Architecture</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="index.html#theory">Theory</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="dynamics.html">Dynamics</a></li>
+<li class="toctree-l3"><a class="reference internal" href="state-estimation.html">State Estimation</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">Controllers</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#control-problem-statement">Control Problem Statement</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#lqr-with-feedforward">LQR with Feedforward</a><ul>
+<li class="toctree-l5"><a class="reference internal" href="#problem-formulation">Problem Formulation</a></li>
+<li class="toctree-l5"><a class="reference internal" href="#optimal-gain-computation">Optimal Gain Computation</a></li>
+<li class="toctree-l5"><a class="reference internal" href="#control-law">Control Law</a></li>
+<li class="toctree-l5"><a class="reference internal" href="#linearization-about-the-reference-trajectory">Linearization About the Reference Trajectory</a></li>
+<li class="toctree-l5"><a class="reference internal" href="#limitations">Limitations</a></li>
+</ul>
+</li>
+<li class="toctree-l4"><a class="reference internal" href="#linear-mpc">Linear MPC</a><ul>
+<li class="toctree-l5"><a class="reference internal" href="#id1">Problem Formulation</a></li>
+<li class="toctree-l5"><a class="reference internal" href="#rate-penalty">Rate Penalty</a></li>
+<li class="toctree-l5"><a class="reference internal" href="#relinearization">Relinearization</a></li>
+<li class="toctree-l5"><a class="reference internal" href="#receding-horizon">Receding Horizon</a></li>
+</ul>
+</li>
+<li class="toctree-l4"><a class="reference internal" href="#nonlinear-mpc">Nonlinear MPC</a><ul>
+<li class="toctree-l5"><a class="reference internal" href="#id2">Problem Formulation</a></li>
+<li class="toctree-l5"><a class="reference internal" href="#control-horizon">Control Horizon</a></li>
+<li class="toctree-l5"><a class="reference internal" href="#solution-methods">Solution Methods</a></li>
+<li class="toctree-l5"><a class="reference internal" href="#local-minima">Local Minima</a></li>
+<li class="toctree-l5"><a class="reference internal" href="#computational-considerations">Computational Considerations</a></li>
+</ul>
+</li>
+<li class="toctree-l4"><a class="reference internal" href="#comparison-and-selection-guidelines">Comparison and Selection Guidelines</a><ul>
+<li class="toctree-l5"><a class="reference internal" href="#selection-criteria">Selection Criteria</a></li>
+<li class="toctree-l5"><a class="reference internal" href="#tuning-recommendations">Tuning Recommendations</a></li>
+</ul>
+</li>
+<li class="toctree-l4"><a class="reference internal" href="#references">References</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="index.html#implementation">Implementation</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../hardware/index.html">Hardware</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../projects/index.html">Projects</a></li>
+</ul>
+
+    
+  </div>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Benji</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+  <!--  -->
+  
+  
+  
+  
+
+  <li><a href="../index.html">Docs</a> &raquo;</li>
+  
+     <li><a href="index.html">Guidance, Navigation, and Control</a> &raquo;</li>
+  
+  <li>Controllers</li>
+
+
+  <li class="wy-breadcrumbs-aside">
+    <dark-mode-toggle id="dark-mode-toggle" appearance="toggle" permanent="true"/>
+  </li>
+  <li class="wy-breadcrumbs-aside">
+  </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section class="tex2jax_ignore mathjax_ignore" id="controllers">
+<h1>Controllers<a class="headerlink" href="#controllers" title="Link to this heading"></a></h1>
+<p>This page presents the theoretical foundations of the three trajectory tracking controllers implemented for the Benji rover. All controllers share a common structure: a feedforward term <span class="math notranslate nohighlight">\(\mathbf{u}_{ref}\)</span> from the reference trajectory plus a feedback correction <span class="math notranslate nohighlight">\(\delta\mathbf{u}\)</span> computed by the controller. The key distinction lies in how each controller computes the feedback term.</p>
+<section id="control-problem-statement">
+<h2>Control Problem Statement<a class="headerlink" href="#control-problem-statement" title="Link to this heading"></a></h2>
+<p>Given:</p>
+<ul class="simple">
+<li><p>Current state estimate <span class="math notranslate nohighlight">\(\mathbf{x}_k\)</span></p></li>
+<li><p>Reference trajectory <span class="math notranslate nohighlight">\(\{\mathbf{x}_{ref,k}, \mathbf{u}_{ref,k}\}_{k=0}^{N}\)</span></p></li>
+<li><p>Input constraints <span class="math notranslate nohighlight">\(|\mathbf{u}| \leq u_{max}\)</span></p></li>
+</ul>
+<p>Find the control input <span class="math notranslate nohighlight">\(\mathbf{u}_k\)</span> that drives the tracking error <span class="math notranslate nohighlight">\(\mathbf{e}_k = \mathbf{x}_k - \mathbf{x}_{ref,k}\)</span> to zero while respecting actuator limits.</p>
+<p>The control law takes the form:</p>
+<div class="math notranslate nohighlight">
+\[\mathbf{u} = \mathbf{u}_{ref} + \delta\mathbf{u}\]</div>
+<p>where <span class="math notranslate nohighlight">\(\mathbf{u}_{ref}\)</span> is the feedforward (open-loop) component and <span class="math notranslate nohighlight">\(\delta\mathbf{u}\)</span> is the feedback (closed-loop) correction. The feedforward term is essential: it carries the nominal control effort, while feedback handles disturbances and model errors. Controllers that rely purely on feedback will always lag behind the reference.</p>
+</section>
+<section id="lqr-with-feedforward">
+<h2>LQR with Feedforward<a class="headerlink" href="#lqr-with-feedforward" title="Link to this heading"></a></h2>
+<p>The Linear Quadratic Regulator (LQR) provides an optimal linear state feedback gain for the linearized error dynamics. This is the simplest and fastest of the three controllers.</p>
+<section id="problem-formulation">
+<h3>Problem Formulation<a class="headerlink" href="#problem-formulation" title="Link to this heading"></a></h3>
+<p>LQR minimizes the infinite-horizon quadratic cost:</p>
+<div class="math notranslate nohighlight">
+\[J = \sum_{k=0}^{\infty} \left( \mathbf{e}_k^T Q \mathbf{e}_k + \delta\mathbf{u}_k^T R \, \delta\mathbf{u}_k \right)\]</div>
+<p>subject to the discrete-time linearized error dynamics:</p>
+<div class="math notranslate nohighlight">
+\[\mathbf{e}_{k+1} = A_d \mathbf{e}_k + B_d \delta\mathbf{u}_k\]</div>
+<p>The weight matrices <span class="math notranslate nohighlight">\(Q \succeq 0\)</span> and <span class="math notranslate nohighlight">\(R \succ 0\)</span> encode the relative importance of tracking accuracy versus control effort. Larger diagonal entries in <span class="math notranslate nohighlight">\(Q\)</span> increase sensitivity to the corresponding state error; larger entries in <span class="math notranslate nohighlight">\(R\)</span> reduce control authority.</p>
+</section>
+<section id="optimal-gain-computation">
+<h3>Optimal Gain Computation<a class="headerlink" href="#optimal-gain-computation" title="Link to this heading"></a></h3>
+<p>The optimal feedback gain <span class="math notranslate nohighlight">\(K\)</span> is obtained by solving the Discrete-time Algebraic Riccati Equation (DARE):</p>
+<div class="math notranslate nohighlight">
+\[P = A_d^T P A_d - A_d^T P B_d (R + B_d^T P B_d)^{-1} B_d^T P A_d + Q\]</div>
+<p>The gain matrix is then:</p>
+<div class="math notranslate nohighlight">
+\[K = (R + B_d^T P B_d)^{-1} B_d^T P A_d\]</div>
+</section>
+<section id="control-law">
+<h3>Control Law<a class="headerlink" href="#control-law" title="Link to this heading"></a></h3>
+<p>The LQR+FF control law is:</p>
+<div class="math notranslate nohighlight">
+\[\mathbf{u} = \mathbf{u}_{ref} - K \mathbf{e}\]</div>
+<p>where the error <span class="math notranslate nohighlight">\(\mathbf{e} = \mathbf{x} - \mathbf{x}_{ref}\)</span> uses angle wrapping on the heading component (see <a class="reference internal" href="dynamics.html"><span class="std std-doc">Dynamics</span></a>).</p>
+</section>
+<section id="linearization-about-the-reference-trajectory">
+<h3>Linearization About the Reference Trajectory<a class="headerlink" href="#linearization-about-the-reference-trajectory" title="Link to this heading"></a></h3>
+<p>The error dynamics formulation linearizes about the reference trajectory, not about a fixed operating point. The <span class="math notranslate nohighlight">\(A_d\)</span> matrix depends on the reference state at each timestep:</p>
+<div class="math notranslate nohighlight">
+\[A_d = A_d(\mathbf{x}_{ref,k})\]</div>
+<p>This yields a time-varying linear system that accurately captures the dynamics along the reference. Conceptually, we are always linearizing at the point where we expect to be, which is where the linearization is most valid.</p>
+<p>For LQR, there are two approaches:</p>
+<ol class="arabic simple">
+<li><p><strong>Fixed-gain LQR</strong>: Compute <span class="math notranslate nohighlight">\(K\)</span> once using nominal reference values. This is simpler and often sufficient when the reference trajectory has consistent characteristics (e.g., roughly constant velocity, moderate turns).</p></li>
+<li><p><strong>Time-varying LQR</strong>: Recompute <span class="math notranslate nohighlight">\(A_d\)</span> and <span class="math notranslate nohighlight">\(K\)</span> at each timestep using the current reference state. This provides optimal gains throughout the trajectory but requires solving the DARE online.</p></li>
+</ol>
+<p>For Benji, the fixed-gain approach is used for LQR. The gain is computed at nominal cruise velocity, which provides acceptable performance for smooth trajectories. Note that MPC naturally handles this better: it relinearizes the dynamics along the prediction horizon at each timestep.</p>
+</section>
+<section id="limitations">
+<h3>Limitations<a class="headerlink" href="#limitations" title="Link to this heading"></a></h3>
+<p>LQR+FF has two key limitations:</p>
+<ol class="arabic simple">
+<li><p><strong>No constraint handling</strong>: Input saturation is applied after the control law, which can degrade performance when constraints are active.</p></li>
+<li><p><strong>No preview</strong>: The controller only sees the current error, not the upcoming trajectory. It cannot anticipate turns or prepare for constraints.</p></li>
+</ol>
+</section>
+</section>
+<section id="linear-mpc">
+<h2>Linear MPC<a class="headerlink" href="#linear-mpc" title="Link to this heading"></a></h2>
+<p>Model Predictive Control (MPC) addresses both limitations of LQR by optimizing over a finite horizon with explicit constraints. Linear MPC uses the linearized error dynamics, yielding a convex optimization problem that can be solved efficiently.</p>
+<section id="id1">
+<h3>Problem Formulation<a class="headerlink" href="#id1" title="Link to this heading"></a></h3>
+<p>At each timestep, Linear MPC solves:</p>
+<div class="math notranslate nohighlight">
+\[\min_{\delta\mathbf{u}_{0:N-1}} \sum_{k=0}^{N} \mathbf{e}_k^T Q \mathbf{e}_k + \sum_{k=0}^{N-1} \delta\mathbf{u}_k^T R \, \delta\mathbf{u}_k + \sum_{k=0}^{N-1} \Delta\mathbf{u}_k^T R_{rate} \Delta\mathbf{u}_k\]</div>
+<p>subject to:</p>
+<div class="math notranslate nohighlight">
+\[\mathbf{e}_{k+1} = A_d \mathbf{e}_k + B_d \delta\mathbf{u}_k, \quad k = 0, \ldots, N-1\]</div>
+<div class="math notranslate nohighlight">
+\[|\mathbf{u}_{ref,k} + \delta\mathbf{u}_k| \leq u_{max}, \quad k = 0, \ldots, N-1\]</div>
+<p>where <span class="math notranslate nohighlight">\(N\)</span> is the prediction horizon.</p>
+</section>
+<section id="rate-penalty">
+<h3>Rate Penalty<a class="headerlink" href="#rate-penalty" title="Link to this heading"></a></h3>
+<p>The rate penalty term <span class="math notranslate nohighlight">\(\Delta\mathbf{u}_k^T R_{rate} \Delta\mathbf{u}_k\)</span> penalizes changes in control input between timesteps:</p>
+<div class="math notranslate nohighlight">
+\[\Delta\mathbf{u}_k = \mathbf{u}_k - \mathbf{u}_{k-1}\]</div>
+<p>This term is critical for systems with actuator dynamics. The motor time constant <span class="math notranslate nohighlight">\(\tau\)</span> limits how quickly the wheel velocities can change. Commanding rapid control variations results in the actual wheel velocities lagging behind the commands, degrading tracking performance. The rate penalty encourages control sequences that the actuators can actually follow.</p>
+</section>
+<section id="relinearization">
+<h3>Relinearization<a class="headerlink" href="#relinearization" title="Link to this heading"></a></h3>
+<p>Unlike fixed-gain LQR, Linear MPC relinearizes the error dynamics along the prediction horizon at each control update. When the reference trajectory is updated, the linearization is updated accordingly. This yields a time-varying linear system:</p>
+<div class="math notranslate nohighlight">
+\[\mathbf{e}_{k+1} = A_d(\mathbf{x}_{ref,k}) \mathbf{e}_k + B_d \delta\mathbf{u}_k\]</div>
+<p>where <span class="math notranslate nohighlight">\(A_d(\mathbf{x}_{ref,k})\)</span> is evaluated at the reference state for each step in the horizon. This is the key advantage over fixed-gain LQR: the linearization remains valid along the entire prediction horizon, even when the reference trajectory involves significant heading changes.</p>
+</section>
+<section id="receding-horizon">
+<h3>Receding Horizon<a class="headerlink" href="#receding-horizon" title="Link to this heading"></a></h3>
+<p>MPC uses a receding horizon strategy:</p>
+<ol class="arabic simple">
+<li><p>Solve the optimization to obtain <span class="math notranslate nohighlight">\(\delta\mathbf{u}_{0:N-1}^*\)</span></p></li>
+<li><p>Apply only the first control: <span class="math notranslate nohighlight">\(\mathbf{u} = \mathbf{u}_{ref,0} + \delta\mathbf{u}_0^*\)</span></p></li>
+<li><p>Shift the horizon forward and repeat</p></li>
+</ol>
+<p>This provides implicit feedback: the optimization is re-solved at each timestep with updated state and reference information, allowing the controller to react to disturbances and adapt to trajectory changes.</p>
+</section>
+</section>
+<section id="nonlinear-mpc">
+<h2>Nonlinear MPC<a class="headerlink" href="#nonlinear-mpc" title="Link to this heading"></a></h2>
+<p>Nonlinear MPC uses the full nonlinear dynamics for prediction, avoiding the linearization error inherent in Linear MPC. This comes at the cost of solving a non-convex optimization problem.</p>
+<section id="id2">
+<h3>Problem Formulation<a class="headerlink" href="#id2" title="Link to this heading"></a></h3>
+<p>NL-MPC solves:</p>
+<div class="math notranslate nohighlight">
+\[\min_{\mathbf{u}_{0:N_c-1}} \sum_{k=0}^{N_p} \|\mathbf{x}_k - \mathbf{x}_{ref,k}\|_Q^2 + \sum_{k=0}^{N_c-1} \|\mathbf{u}_k - \mathbf{u}_{ref,k}\|_R^2\]</div>
+<p>subject to:</p>
+<div class="math notranslate nohighlight">
+\[\mathbf{x}_{k+1} = f(\mathbf{x}_k, \mathbf{u}_k), \quad k = 0, \ldots, N_p-1\]</div>
+<div class="math notranslate nohighlight">
+\[|\mathbf{u}_k| \leq u_{max}, \quad k = 0, \ldots, N_c-1\]</div>
+<p>where <span class="math notranslate nohighlight">\(N_p\)</span> is the prediction horizon and <span class="math notranslate nohighlight">\(N_c \leq N_p\)</span> is the control horizon.</p>
+</section>
+<section id="control-horizon">
+<h3>Control Horizon<a class="headerlink" href="#control-horizon" title="Link to this heading"></a></h3>
+<p>The control horizon <span class="math notranslate nohighlight">\(N_c\)</span> is the number of timesteps over which the control input is optimized. Beyond <span class="math notranslate nohighlight">\(N_c\)</span>, the control is held constant at <span class="math notranslate nohighlight">\(\mathbf{u}_{N_c-1}\)</span>. This reduces the number of decision variables from <span class="math notranslate nohighlight">\(2 N_p\)</span> to <span class="math notranslate nohighlight">\(2 N_c\)</span>, significantly decreasing solve time.</p>
+<p>The trade-off is reduced flexibility in the control sequence. For trajectory tracking where the reference provides a good nominal input, a short control horizon is often sufficient.</p>
+</section>
+<section id="solution-methods">
+<h3>Solution Methods<a class="headerlink" href="#solution-methods" title="Link to this heading"></a></h3>
+<p>The nonlinear optimization can be solved using:</p>
+<ol class="arabic simple">
+<li><p><strong>Sequential Quadratic Programming (SQP)</strong>: Iteratively solves QP subproblems that approximate the nonlinear problem. Each iteration requires linearizing the dynamics and solving a QP.</p></li>
+<li><p><strong>Interior Point Methods</strong>: Applies Newton’s method to the KKT conditions with a barrier function for inequality constraints.</p></li>
+<li><p><strong>Direct Collocation</strong>: Discretizes the dynamics using collocation points and solves the resulting large sparse NLP.</p></li>
+</ol>
+<p>For Benji, a direct single-shooting approach with SLSQP (Sequential Least Squares Quadratic Programming) is used. The states are computed by forward simulation from the control sequence, reducing the decision variables to only the controls.</p>
+</section>
+<section id="local-minima">
+<h3>Local Minima<a class="headerlink" href="#local-minima" title="Link to this heading"></a></h3>
+<p>Unlike convex Linear MPC, nonlinear MPC may converge to local minima. The optimization landscape depends on:</p>
+<ul class="simple">
+<li><p>Initial guess quality (warm starting helps)</p></li>
+<li><p>Horizon length (longer horizons have more complex landscapes)</p></li>
+<li><p>Constraint geometry</p></li>
+</ul>
+<p>For trajectory tracking with good feedforward, local minima are rarely problematic because the initial guess (shifted previous solution or feedforward sequence) is typically close to the global optimum.</p>
+</section>
+<section id="computational-considerations">
+<h3>Computational Considerations<a class="headerlink" href="#computational-considerations" title="Link to this heading"></a></h3>
+<p>NL-MPC is approximately 10x slower than Linear MPC for this system. The dominant cost is evaluating the dynamics and their gradients at each iteration. Strategies to reduce computation include:</p>
+<ul class="simple">
+<li><p>Shorter control horizon <span class="math notranslate nohighlight">\(N_c\)</span></p></li>
+<li><p>Approximate gradients (finite differences vs. analytical)</p></li>
+<li><p>Early termination with suboptimality tolerance</p></li>
+<li><p>Reduced prediction horizon <span class="math notranslate nohighlight">\(N_p\)</span></p></li>
+</ul>
+</section>
+</section>
+<section id="comparison-and-selection-guidelines">
+<h2>Comparison and Selection Guidelines<a class="headerlink" href="#comparison-and-selection-guidelines" title="Link to this heading"></a></h2>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Aspect</p></th>
+<th class="head"><p>LQR+FF</p></th>
+<th class="head"><p>Linear MPC</p></th>
+<th class="head"><p>NL-MPC</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Dynamics model</p></td>
+<td><p>Linearized (fixed)</p></td>
+<td><p>Linearized (time-varying)</p></td>
+<td><p>Full nonlinear</p></td>
+</tr>
+<tr class="row-odd"><td><p>Constraint handling</p></td>
+<td><p>Post-hoc saturation</p></td>
+<td><p>Explicit in optimization</p></td>
+<td><p>Explicit in optimization</p></td>
+</tr>
+<tr class="row-even"><td><p>Preview capability</p></td>
+<td><p>None</p></td>
+<td><p>Full horizon</p></td>
+<td><p>Full horizon</p></td>
+</tr>
+<tr class="row-odd"><td><p>Problem type</p></td>
+<td><p>Algebraic (offline)</p></td>
+<td><p>Convex optimization</p></td>
+<td><p>Non-convex NLP</p></td>
+</tr>
+<tr class="row-even"><td><p>Solve time</p></td>
+<td><p>&lt; 0.1 ms</p></td>
+<td><p>~2 ms</p></td>
+<td><p>~20 ms</p></td>
+</tr>
+<tr class="row-odd"><td><p>Embedded suitability</p></td>
+<td><p>Excellent</p></td>
+<td><p>Good</p></td>
+<td><p>Challenging</p></td>
+</tr>
+<tr class="row-even"><td><p>Optimality</p></td>
+<td><p>Global (for linear system)</p></td>
+<td><p>Global (for linearized system)</p></td>
+<td><p>Local</p></td>
+</tr>
+</tbody>
+</table>
+<section id="selection-criteria">
+<h3>Selection Criteria<a class="headerlink" href="#selection-criteria" title="Link to this heading"></a></h3>
+<p><strong>Use LQR+FF when:</strong></p>
+<ul class="simple">
+<li><p>Computational resources are extremely limited</p></li>
+<li><p>Trajectories are smooth with gradual turns</p></li>
+<li><p>Constraints are rarely active</p></li>
+<li><p>Simplicity is valued over optimality</p></li>
+</ul>
+<p><strong>Use Linear MPC when:</strong></p>
+<ul class="simple">
+<li><p>Input constraints must be respected proactively</p></li>
+<li><p>Preview of upcoming trajectory is beneficial</p></li>
+<li><p>Real-time embedded deployment is required</p></li>
+<li><p>Linearization error is acceptable</p></li>
+</ul>
+<p><strong>Use NL-MPC when:</strong></p>
+<ul class="simple">
+<li><p>Trajectories involve large heading changes</p></li>
+<li><p>Maximum tracking accuracy is required</p></li>
+<li><p>Computational budget allows 10-20 ms solve times</p></li>
+<li><p>Linearization error significantly degrades Linear MPC performance</p></li>
+</ul>
+</section>
+<section id="tuning-recommendations">
+<h3>Tuning Recommendations<a class="headerlink" href="#tuning-recommendations" title="Link to this heading"></a></h3>
+<p>For all controllers:</p>
+<ol class="arabic simple">
+<li><p><strong>Start with feedforward</strong>: Ensure the reference trajectory is physically realizable and <span class="math notranslate nohighlight">\(\mathbf{u}_{ref}\)</span> is correctly computed. Poor feedforward cannot be compensated by feedback.</p></li>
+<li><p><strong>Weight matrix selection</strong>: Begin with identity matrices scaled by the inverse of expected error magnitudes squared. For example, if position errors should be within 10 cm, set <span class="math notranslate nohighlight">\(Q_{xx} = Q_{yy} \approx 1/(0.1)^2 = 100\)</span>.</p></li>
+<li><p><strong>Rate penalty (MPC)</strong>: Set <span class="math notranslate nohighlight">\(R_{rate}\)</span> based on actuator bandwidth. For motor time constant <span class="math notranslate nohighlight">\(\tau\)</span>, commands changing faster than <span class="math notranslate nohighlight">\(1/\tau\)</span> cannot be tracked. A reasonable starting point is <span class="math notranslate nohighlight">\(R_{rate} \approx R \cdot \tau / \Delta t\)</span>.</p></li>
+<li><p><strong>Horizon length (MPC)</strong>: The horizon should capture the relevant dynamics. For trajectory tracking, 0.5-1.0 seconds is typically sufficient. Longer horizons increase computation without proportional benefit.</p></li>
+</ol>
+</section>
+</section>
+<section id="references">
+<h2>References<a class="headerlink" href="#references" title="Link to this heading"></a></h2>
+<p>The theoretical foundations of these controllers are covered in standard texts:</p>
+<ul class="simple">
+<li><p>LQR and optimal control: Anderson &amp; Moore, <em>Optimal Control: Linear Quadratic Methods</em></p></li>
+<li><p>MPC fundamentals: Rawlings, Mayne &amp; Diehl, <em>Model Predictive Control: Theory, Computation, and Design</em></p></li>
+</ul>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+<p>
+  &#169; Copyright 2025, Cave in the Mountains.
+</p>
+
+  </div>
+
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

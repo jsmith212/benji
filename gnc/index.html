@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Guidance, Navigation, and Control (GNC) &mdash; Benji Documentation</title>
+  <title>Guidance, Navigation, and Control &mdash; Benji Documentation</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=03e43079" />
       <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=e59714d7" />
       <link rel="stylesheet" type="text/css" href="../_static/graphviz.css?v=4ae1632d" />
@@ -19,12 +19,13 @@
       <script src="../_static/doctools.js?v=9bcbadda"></script>
       <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
       <script type="module" src="../_static/js/custom.js?v=13a5d2d9"></script>
-      <script type="module" src="../_static/js/dark-mode-toggle-stylesheets-loader.min.js?v=fbd25d3f"></script>
-      <script type="module" src="../_static/js/dark-mode-toggle.min.mjs?v=0b68a07b"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+      <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+      <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <script src="../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="Hardware" href="../hardware/index.html" />
+    <link rel="next" title="Dynamics" href="dynamics.html" />
     <link rel="prev" title="5. Version and build all apps as a single entity" href="../adr/0005-version-and-build-all-apps-as-a-single-entity.html" />
   <meta name="color-scheme" content="dark light">
   
@@ -62,7 +63,22 @@
               <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="../architecture/index.html">Architecture</a></li>
-<li class="toctree-l1 current"><a class="current reference internal" href="#">Guidance, Navigation, and Control (GNC)</a><ul class="simple">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Guidance, Navigation, and Control</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#system-overview">System Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#notation">Notation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#control-architecture">Control Architecture</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#theory">Theory</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="dynamics.html">Dynamics</a></li>
+<li class="toctree-l3"><a class="reference internal" href="state-estimation.html">State Estimation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="controllers.html">Controllers</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#implementation">Implementation</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="notebooks/Reference%20Trajectories.html">Reference Trajectories</a></li>
+<li class="toctree-l3"><a class="reference internal" href="notebooks/Controllers.html">Controllers</a></li>
+<li class="toctree-l3"><a class="reference internal" href="notebooks/Multi-Rate%20Sensor%20Fusion.html">Multi-Rate Sensor Fusion</a></li>
+</ul>
+</li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="../hardware/index.html">Hardware</a></li>
@@ -93,7 +109,7 @@
 
   <li><a href="../index.html">Docs</a> &raquo;</li>
   
-  <li>Guidance, Navigation, and Control (GNC)</li>
+  <li>Guidance, Navigation, and Control</li>
 
 
   <li class="wy-breadcrumbs-aside">
@@ -107,10 +123,118 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
              
-  <section id="guidance-navigation-and-control-gnc">
-<h1>Guidance, Navigation, and Control (GNC)<a class="headerlink" href="#guidance-navigation-and-control-gnc" title="Link to this heading"></a></h1>
+  <section class="tex2jax_ignore mathjax_ignore" id="guidance-navigation-and-control">
+<h1>Guidance, Navigation, and Control<a class="headerlink" href="#guidance-navigation-and-control" title="Link to this heading"></a></h1>
+<p>This section documents the GNC algorithms for the Benji rover, a differential-drive (tank drive) mobile robot. The approach relies on error dynamics linearization about reference trajectories, enabling the use of linear control techniques for trajectory tracking.</p>
+<section id="system-overview">
+<h2>System Overview<a class="headerlink" href="#system-overview" title="Link to this heading"></a></h2>
+<p>Benji uses a 5-state model capturing position, heading, and wheel velocities with first-order motor dynamics:</p>
+<div class="math notranslate nohighlight">
+\[\mathbf{x} = \begin{bmatrix} x &amp; y &amp; \theta &amp; v_l &amp; v_r \end{bmatrix}^T\]</div>
+<p>The control input is commanded wheel velocities: <span class="math notranslate nohighlight">\(\mathbf{u} = \begin{bmatrix} u_l &amp; u_r \end{bmatrix}^T\)</span></p>
+</section>
+<section id="notation">
+<h2>Notation<a class="headerlink" href="#notation" title="Link to this heading"></a></h2>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Symbol</p></th>
+<th class="head"><p>Description</p></th>
+<th class="head"><p>Unit</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><span class="math notranslate nohighlight">\(L\)</span></p></td>
+<td><p>Wheelbase (wheel-to-wheel distance)</p></td>
+<td><p>m</p></td>
+</tr>
+<tr class="row-odd"><td><p><span class="math notranslate nohighlight">\(\tau\)</span></p></td>
+<td><p>Motor/drivetrain time constant</p></td>
+<td><p>s</p></td>
+</tr>
+<tr class="row-even"><td><p><span class="math notranslate nohighlight">\(x, y\)</span></p></td>
+<td><p>Position in global frame</p></td>
+<td><p>m</p></td>
+</tr>
+<tr class="row-odd"><td><p><span class="math notranslate nohighlight">\(\theta\)</span></p></td>
+<td><p>Heading angle</p></td>
+<td><p>rad</p></td>
+</tr>
+<tr class="row-even"><td><p><span class="math notranslate nohighlight">\(v_l, v_r\)</span></p></td>
+<td><p>Left/right wheel velocities</p></td>
+<td><p>m/s</p></td>
+</tr>
+<tr class="row-odd"><td><p><span class="math notranslate nohighlight">\(u_l, u_r\)</span></p></td>
+<td><p>Left/right wheel commands</p></td>
+<td><p>m/s</p></td>
+</tr>
+<tr class="row-even"><td><p><span class="math notranslate nohighlight">\(\mathbf{x}_{ref}\)</span></p></td>
+<td><p>Reference state trajectory</p></td>
+<td><p>—</p></td>
+</tr>
+<tr class="row-odd"><td><p><span class="math notranslate nohighlight">\(\mathbf{u}_{ref}\)</span></p></td>
+<td><p>Feedforward control</p></td>
+<td><p>m/s</p></td>
+</tr>
+<tr class="row-even"><td><p><span class="math notranslate nohighlight">\(\mathbf{e}\)</span></p></td>
+<td><p>Tracking error <span class="math notranslate nohighlight">\((\mathbf{x} - \mathbf{x}_{ref})\)</span></p></td>
+<td><p>—</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="control-architecture">
+<h2>Control Architecture<a class="headerlink" href="#control-architecture" title="Link to this heading"></a></h2>
+<p>The trajectory tracking control law takes the form:</p>
+<div class="math notranslate nohighlight">
+\[\mathbf{u} = \mathbf{u}_{ref} + \mathbf{u}_{fb}\]</div>
+<p>where <span class="math notranslate nohighlight">\(\mathbf{u}_{ref}\)</span> is the feedforward term computed from the reference trajectory, and <span class="math notranslate nohighlight">\(\mathbf{u}_{fb}\)</span> is the feedback term that corrects deviations. Three feedback strategies are implemented:</p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Controller</p></th>
+<th class="head"><p>Feedback Law</p></th>
+<th class="head"><p>Solve Time</p></th>
+<th class="head"><p>Best For</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><strong>LQR+FF</strong></p></td>
+<td><p><span class="math notranslate nohighlight">\(\mathbf{u}_{fb} = -K\mathbf{e}\)</span></p></td>
+<td><p>&lt;0.1 ms</p></td>
+<td><p>Real-time, smooth trajectories</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>QP-MPC</strong></p></td>
+<td><p>Receding horizon QP (OSQP)</p></td>
+<td><p>~2 ms</p></td>
+<td><p>Constraints, embeddable</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>NL-MPC</strong></p></td>
+<td><p>Nonlinear optimization</p></td>
+<td><p>~20 ms</p></td>
+<td><p>Maximum accuracy</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="theory">
+<h2>Theory<a class="headerlink" href="#theory" title="Link to this heading"></a></h2>
 <div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="dynamics.html">Dynamics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="state-estimation.html">State Estimation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="controllers.html">Controllers</a></li>
+</ul>
 </div>
+</section>
+<section id="implementation">
+<h2>Implementation<a class="headerlink" href="#implementation" title="Link to this heading"></a></h2>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="notebooks/Reference%20Trajectories.html">Reference Trajectories</a></li>
+<li class="toctree-l1"><a class="reference internal" href="notebooks/Controllers.html">Controllers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="notebooks/Multi-Rate%20Sensor%20Fusion.html">Multi-Rate Sensor Fusion</a></li>
+</ul>
+</div>
+</section>
 </section>
 
 

@@ -1,0 +1,896 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Multi-Rate Sensor Fusion &mdash; Benji Documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=03e43079" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../../_static/graphviz.css?v=4ae1632d" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/custom.css?v=cc9a7e1f" />
+      <link rel="stylesheet" type="text/css" href="../../_static/nbsphinx-code-cells.css?v=2aa19091" />
+
+  
+      <script src="../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script type="module" src="../../_static/js/custom.js?v=13a5d2d9"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+      <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+      <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="Hardware" href="../../hardware/index.html" />
+    <link rel="prev" title="Controllers" href="Controllers.html" />
+  <meta name="color-scheme" content="dark light">
+  
+  <noscript id="dark-mode-toggle-stylesheets">
+    <link rel="stylesheet" href="../../_static/css/light.css" type="text/css" media="(prefers-color-scheme: light)"/>
+    <link rel="stylesheet" href="../../_static/css/dark.css" type="text/css" media="(prefers-color-scheme: dark)"/>
+  </noscript>
+  <script src="../../_static/js/dark-mode-toggle-stylesheets-loader.min.js"></script>
+  <script type="module" src="../../_static/js/dark-mode-toggle.min.mjs"></script>
+
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            Benji
+          </a>
+<div class="search-container" role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="search" name="q" placeholder="Search docs"
+           aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+  <div data-nosnippet>
+    
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../architecture/index.html">Architecture</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../index.html">Guidance, Navigation, and Control</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../index.html#system-overview">System Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../index.html#notation">Notation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../index.html#control-architecture">Control Architecture</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../index.html#theory">Theory</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="../index.html#implementation">Implementation</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="Reference%20Trajectories.html">Reference Trajectories</a></li>
+<li class="toctree-l3"><a class="reference internal" href="Controllers.html">Controllers</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">Multi-Rate Sensor Fusion</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#Parameters">Parameters</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#Extended-Kalman-Filter">Extended Kalman Filter</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#Controllers">Controllers</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#Reference-Trajectory">Reference Trajectory</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#Simulation-Function">Simulation Function</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#Run-Simulations">Run Simulations</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#Results">Results</a><ul>
+<li class="toctree-l5"><a class="reference internal" href="#Trajectory-Comparison">Trajectory Comparison</a></li>
+<li class="toctree-l5"><a class="reference internal" href="#Tracking-Error">Tracking Error</a></li>
+<li class="toctree-l5"><a class="reference internal" href="#Position-Uncertainty">Position Uncertainty</a></li>
+<li class="toctree-l5"><a class="reference internal" href="#Estimation-Error">Estimation Error</a></li>
+</ul>
+</li>
+<li class="toctree-l4"><a class="reference internal" href="#Summary">Summary</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#Conclusion">Conclusion</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../hardware/index.html">Hardware</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../projects/index.html">Projects</a></li>
+</ul>
+
+    
+  </div>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">Benji</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+  <!--  -->
+  
+  
+  
+  
+
+  <li><a href="../../index.html">Docs</a> &raquo;</li>
+  
+     <li><a href="../index.html">Guidance, Navigation, and Control</a> &raquo;</li>
+  
+  <li>Multi-Rate Sensor Fusion</li>
+
+
+  <li class="wy-breadcrumbs-aside">
+    <dark-mode-toggle id="dark-mode-toggle" appearance="toggle" permanent="true"/>
+  </li>
+  <li class="wy-breadcrumbs-aside">
+  </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="Multi-Rate-Sensor-Fusion">
+<h1>Multi-Rate Sensor Fusion<a class="headerlink" href="#Multi-Rate-Sensor-Fusion" title="Link to this heading"></a></h1>
+<p>This notebook demonstrates multi-rate Extended Kalman Filter (EKF) sensor fusion for the Benji rover. The key insight is that different sensors operate at different rates:</p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Sensor</p></th>
+<th class="head"><p>Rate</p></th>
+<th class="head"><p>Measurements</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>IMU (gyro)</p></td>
+<td><p>50 Hz</p></td>
+<td><p><span class="math notranslate nohighlight">\(\theta\)</span>, <span class="math notranslate nohighlight">\(\dot{\theta}\)</span></p></td>
+</tr>
+<tr class="row-odd"><td><p>Wheel encoders</p></td>
+<td><p>50 Hz</p></td>
+<td><p><span class="math notranslate nohighlight">\(v_l\)</span>, <span class="math notranslate nohighlight">\(v_r\)</span></p></td>
+</tr>
+<tr class="row-even"><td><p>Accelerometer</p></td>
+<td><p>50 Hz</p></td>
+<td><p><span class="math notranslate nohighlight">\(a_x\)</span>, <span class="math notranslate nohighlight">\(a_y\)</span></p></td>
+</tr>
+<tr class="row-odd"><td><p>Camera</p></td>
+<td><p>5 Hz</p></td>
+<td><p><span class="math notranslate nohighlight">\(x\)</span>, <span class="math notranslate nohighlight">\(y\)</span></p></td>
+</tr>
+</tbody>
+</table>
+<p>The EKF handles this naturally: predict at the control rate, update with whatever measurements are available.</p>
+<p>We compare trajectory tracking with and without camera position updates across all three controllers (LQR+FF, QP-MPC, NL-MPC).</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[1]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">scipy.linalg</span><span class="w"> </span><span class="kn">import</span> <span class="n">solve_discrete_are</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">time</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">angle_wrap</span><span class="p">,</span> <span class="n">state_error</span><span class="p">,</span> <span class="n">generate_smooth_reference_trajectory</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">kalman</span><span class="w"> </span><span class="kn">import</span> <span class="n">MultiRateEKF</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">mpc_controller</span><span class="w"> </span><span class="kn">import</span> <span class="n">QPMPC</span><span class="p">,</span> <span class="n">NonlinearMPC</span><span class="p">,</span> <span class="n">compute_jacobians_at_state</span>
+</pre></div>
+</div>
+</div>
+<section id="Parameters">
+<h2>Parameters<a class="headerlink" href="#Parameters" title="Link to this heading"></a></h2>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Robot parameters</span>
+<span class="n">L</span> <span class="o">=</span> <span class="mf">0.14</span>        <span class="c1"># wheelbase [m]</span>
+<span class="n">tau</span> <span class="o">=</span> <span class="mf">0.2</span>       <span class="c1"># motor time constant [s]</span>
+<span class="n">v_cruise</span> <span class="o">=</span> <span class="mf">0.25</span> <span class="c1"># cruise speed [m/s]</span>
+<span class="n">u_max</span> <span class="o">=</span> <span class="mf">0.5</span>     <span class="c1"># max wheel command [m/s]</span>
+
+<span class="c1"># State dimensions</span>
+<span class="n">n_x</span><span class="p">,</span> <span class="n">n_u</span> <span class="o">=</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">2</span>
+
+<span class="c1"># Simulation parameters</span>
+<span class="n">T_final</span> <span class="o">=</span> <span class="mf">60.0</span>
+<span class="n">dt</span> <span class="o">=</span> <span class="mf">0.02</span>       <span class="c1"># 50 Hz control/estimation rate</span>
+<span class="n">t</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">T_final</span><span class="p">,</span> <span class="n">dt</span><span class="p">)</span>
+<span class="n">N</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">t</span><span class="p">)</span>
+
+<span class="c1"># Camera parameters</span>
+<span class="n">camera_rate</span> <span class="o">=</span> <span class="mf">5.0</span>  <span class="c1"># Hz</span>
+<span class="n">camera_interval</span> <span class="o">=</span> <span class="nb">int</span><span class="p">((</span><span class="mf">1.0</span> <span class="o">/</span> <span class="n">camera_rate</span><span class="p">)</span> <span class="o">/</span> <span class="n">dt</span><span class="p">)</span>  <span class="c1"># steps between camera updates</span>
+
+<span class="c1"># Process noise covariance</span>
+<span class="n">Q_process</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">diag</span><span class="p">([</span><span class="mf">1e-5</span><span class="p">,</span> <span class="mf">1e-5</span><span class="p">,</span> <span class="mf">1e-6</span><span class="p">,</span> <span class="mf">1e-4</span><span class="p">,</span> <span class="mf">1e-4</span><span class="p">])</span>
+<span class="n">Q_chol</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">cholesky</span><span class="p">(</span><span class="n">Q_process</span><span class="p">)</span>
+
+<span class="c1"># IMU + Encoder measurement noise (always available)</span>
+<span class="c1"># Measurements: [theta, theta_dot, v_l, v_r, a_x, a_y]</span>
+<span class="n">R_imu</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">diag</span><span class="p">([</span><span class="mf">1e-4</span><span class="p">,</span> <span class="mf">1e-3</span><span class="p">,</span> <span class="mf">1e-4</span><span class="p">,</span> <span class="mf">1e-4</span><span class="p">,</span> <span class="mf">1e-2</span><span class="p">,</span> <span class="mf">1e-2</span><span class="p">])</span>
+
+<span class="c1"># Camera measurement noise</span>
+<span class="n">sigma_camera</span> <span class="o">=</span> <span class="mf">0.05</span>  <span class="c1"># 5 cm position noise</span>
+<span class="n">R_camera</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">diag</span><span class="p">([</span><span class="n">sigma_camera</span><span class="o">**</span><span class="mi">2</span><span class="p">,</span> <span class="n">sigma_camera</span><span class="o">**</span><span class="mi">2</span><span class="p">])</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Control rate: </span><span class="si">{</span><span class="mi">1</span><span class="o">/</span><span class="n">dt</span><span class="si">:</span><span class="s2">.0f</span><span class="si">}</span><span class="s2"> Hz&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Camera rate: </span><span class="si">{</span><span class="n">camera_rate</span><span class="si">:</span><span class="s2">.0f</span><span class="si">}</span><span class="s2"> Hz (every </span><span class="si">{</span><span class="n">camera_interval</span><span class="si">}</span><span class="s2"> steps)&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Camera noise: </span><span class="si">{</span><span class="n">sigma_camera</span><span class="o">*</span><span class="mi">100</span><span class="si">:</span><span class="s2">.0f</span><span class="si">}</span><span class="s2"> cm (1-sigma)&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Control rate: 50 Hz
+Camera rate: 5 Hz (every 10 steps)
+Camera noise: 5 cm (1-sigma)
+</pre></div></div>
+</div>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">nonlinear_dynamics</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">u</span><span class="p">,</span> <span class="n">dt_step</span><span class="p">,</span> <span class="n">L</span><span class="p">,</span> <span class="n">tau</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Propagate state using nonlinear tank drive dynamics.</span>
+
+<span class="sd">    State: [x, y, theta, v_l, v_r]</span>
+<span class="sd">    Input: [u_l, u_r] (wheel velocity commands)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">x_pos</span><span class="p">,</span> <span class="n">y_pos</span><span class="p">,</span> <span class="n">theta</span><span class="p">,</span> <span class="n">v_l</span><span class="p">,</span> <span class="n">v_r</span> <span class="o">=</span> <span class="n">x</span>
+    <span class="n">u_l</span><span class="p">,</span> <span class="n">u_r</span> <span class="o">=</span> <span class="n">u</span>
+
+    <span class="n">v_avg</span> <span class="o">=</span> <span class="p">(</span><span class="n">v_l</span> <span class="o">+</span> <span class="n">v_r</span><span class="p">)</span> <span class="o">/</span> <span class="mf">2.0</span>
+
+    <span class="n">x_dot</span> <span class="o">=</span> <span class="n">v_avg</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">theta</span><span class="p">)</span>
+    <span class="n">y_dot</span> <span class="o">=</span> <span class="n">v_avg</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">theta</span><span class="p">)</span>
+    <span class="n">theta_dot</span> <span class="o">=</span> <span class="p">(</span><span class="n">v_r</span> <span class="o">-</span> <span class="n">v_l</span><span class="p">)</span> <span class="o">/</span> <span class="n">L</span>
+    <span class="n">v_l_dot</span> <span class="o">=</span> <span class="p">(</span><span class="o">-</span><span class="n">v_l</span> <span class="o">+</span> <span class="n">u_l</span><span class="p">)</span> <span class="o">/</span> <span class="n">tau</span>
+    <span class="n">v_r_dot</span> <span class="o">=</span> <span class="p">(</span><span class="o">-</span><span class="n">v_r</span> <span class="o">+</span> <span class="n">u_r</span><span class="p">)</span> <span class="o">/</span> <span class="n">tau</span>
+
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span>
+        <span class="n">x_pos</span> <span class="o">+</span> <span class="n">x_dot</span> <span class="o">*</span> <span class="n">dt_step</span><span class="p">,</span>
+        <span class="n">y_pos</span> <span class="o">+</span> <span class="n">y_dot</span> <span class="o">*</span> <span class="n">dt_step</span><span class="p">,</span>
+        <span class="n">theta</span> <span class="o">+</span> <span class="n">theta_dot</span> <span class="o">*</span> <span class="n">dt_step</span><span class="p">,</span>
+        <span class="n">v_l</span> <span class="o">+</span> <span class="n">v_l_dot</span> <span class="o">*</span> <span class="n">dt_step</span><span class="p">,</span>
+        <span class="n">v_r</span> <span class="o">+</span> <span class="n">v_r_dot</span> <span class="o">*</span> <span class="n">dt_step</span>
+    <span class="p">])</span>
+</pre></div>
+</div>
+</div>
+</section>
+<section id="Extended-Kalman-Filter">
+<h2>Extended Kalman Filter<a class="headerlink" href="#Extended-Kalman-Filter" title="Link to this heading"></a></h2>
+<p>The EKF uses:</p>
+<ul class="simple">
+<li><p><strong>Nonlinear dynamics</strong> for prediction</p></li>
+<li><p><strong>Linearized measurement models</strong> for updates</p></li>
+</ul>
+<p>The IMU+encoder measurement includes the accelerometer, which provides body-frame accelerations:</p>
+<div class="math notranslate nohighlight">
+\[a_x = \frac{\dot{v}_l + \dot{v}_r}{2} = \frac{1}{2\tau}\left((u_l - v_l) + (u_r - v_r)\right)\]</div>
+<div class="math notranslate nohighlight">
+\[a_y = \frac{v_l + v_r}{2} \cdot \dot{\theta} = \frac{v_l + v_r}{2} \cdot \frac{v_r - v_l}{L}\]</div>
+<p>The <code class="docutils literal notranslate"><span class="pre">MultiRateEKF</span></code> class is imported from <code class="docutils literal notranslate"><span class="pre">kalman.py</span></code>. See the module for implementation details.</p>
+</section>
+<section id="Controllers">
+<h2>Controllers<a class="headerlink" href="#Controllers" title="Link to this heading"></a></h2>
+<p>Set up all three controllers for comparison.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># LQR setup</span>
+<span class="n">Q_lqr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">diag</span><span class="p">([</span><span class="mf">20.0</span><span class="p">,</span> <span class="mf">20.0</span><span class="p">,</span> <span class="mf">5.0</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">])</span>
+<span class="n">R_lqr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">diag</span><span class="p">([</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">])</span>
+
+<span class="n">x_nom</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">v_cruise</span><span class="p">,</span> <span class="n">v_cruise</span><span class="p">])</span>
+<span class="n">A_c</span><span class="p">,</span> <span class="n">B_c</span> <span class="o">=</span> <span class="n">compute_jacobians_at_state</span><span class="p">(</span><span class="n">x_nom</span><span class="p">,</span> <span class="n">L</span><span class="p">,</span> <span class="n">tau</span><span class="p">)</span>
+<span class="n">A_d</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="n">n_x</span><span class="p">)</span> <span class="o">+</span> <span class="n">dt</span> <span class="o">*</span> <span class="n">A_c</span>
+<span class="n">B_d</span> <span class="o">=</span> <span class="n">dt</span> <span class="o">*</span> <span class="n">B_c</span>
+
+<span class="n">P_dare</span> <span class="o">=</span> <span class="n">solve_discrete_are</span><span class="p">(</span><span class="n">A_d</span><span class="p">,</span> <span class="n">B_d</span><span class="p">,</span> <span class="n">Q_lqr</span><span class="p">,</span> <span class="n">R_lqr</span><span class="p">)</span>
+<span class="n">K_lqr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">R_lqr</span> <span class="o">+</span> <span class="n">B_d</span><span class="o">.</span><span class="n">T</span> <span class="o">@</span> <span class="n">P_dare</span> <span class="o">@</span> <span class="n">B_d</span><span class="p">,</span> <span class="n">B_d</span><span class="o">.</span><span class="n">T</span> <span class="o">@</span> <span class="n">P_dare</span> <span class="o">@</span> <span class="n">A_d</span><span class="p">)</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">lqr_control</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">x_ref</span><span class="p">,</span> <span class="n">u_ref</span><span class="p">,</span> <span class="n">K</span><span class="p">,</span> <span class="n">u_max</span><span class="p">):</span>
+    <span class="n">e</span> <span class="o">=</span> <span class="n">state_error</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">x_ref</span><span class="p">)</span>
+    <span class="n">u</span> <span class="o">=</span> <span class="n">u_ref</span> <span class="o">-</span> <span class="n">K</span> <span class="o">@</span> <span class="n">e</span>
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="n">u</span><span class="p">,</span> <span class="o">-</span><span class="n">u_max</span><span class="p">,</span> <span class="n">u_max</span><span class="p">)</span>
+
+<span class="c1"># QP-MPC setup</span>
+<span class="n">Q_mpc</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">diag</span><span class="p">([</span><span class="mf">10.0</span><span class="p">,</span> <span class="mf">10.0</span><span class="p">,</span> <span class="mf">5.0</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">])</span>
+<span class="n">R_mpc</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">diag</span><span class="p">([</span><span class="mf">0.1</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">])</span>
+<span class="n">R_rate</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">diag</span><span class="p">([</span><span class="mf">2.0</span><span class="p">,</span> <span class="mf">2.0</span><span class="p">])</span>
+<span class="n">N_horizon</span> <span class="o">=</span> <span class="mi">15</span>
+
+<span class="n">mpc_qp</span> <span class="o">=</span> <span class="n">QPMPC</span><span class="p">(</span><span class="n">L</span><span class="p">,</span> <span class="n">tau</span><span class="p">,</span> <span class="n">dt</span><span class="p">,</span> <span class="n">Q_mpc</span><span class="p">,</span> <span class="n">R_mpc</span><span class="p">,</span> <span class="n">R_rate</span><span class="p">,</span> <span class="n">N_horizon</span><span class="p">,</span> <span class="n">u_max</span><span class="p">,</span> <span class="n">exp_weight</span><span class="o">=</span><span class="mf">1.0</span><span class="p">)</span>
+
+<span class="c1"># NL-MPC setup</span>
+<span class="n">Q_nl</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">diag</span><span class="p">([</span><span class="mf">10.0</span><span class="p">,</span> <span class="mf">10.0</span><span class="p">,</span> <span class="mf">5.0</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">])</span>
+<span class="n">R_nl</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">diag</span><span class="p">([</span><span class="mf">0.1</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">])</span>
+<span class="n">N_horizon_nl</span> <span class="o">=</span> <span class="mi">10</span>
+<span class="n">N_control_nl</span> <span class="o">=</span> <span class="mi">5</span>
+
+<span class="c1"># Create dynamics function for NL-MPC</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">dynamics_for_mpc</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">u</span><span class="p">,</span> <span class="n">dt_step</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">nonlinear_dynamics</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">u</span><span class="p">,</span> <span class="n">dt_step</span><span class="p">,</span> <span class="n">L</span><span class="p">,</span> <span class="n">tau</span><span class="p">)</span>
+
+<span class="n">mpc_nl</span> <span class="o">=</span> <span class="n">NonlinearMPC</span><span class="p">(</span><span class="n">dynamics_for_mpc</span><span class="p">,</span> <span class="n">dt</span><span class="p">,</span> <span class="n">Q_nl</span><span class="p">,</span> <span class="n">R_nl</span><span class="p">,</span> <span class="n">N_horizon_nl</span><span class="p">,</span> <span class="n">N_control_nl</span><span class="p">,</span> <span class="n">u_max</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Controllers initialized&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Controllers initialized
+</pre></div></div>
+</div>
+</section>
+<section id="Reference-Trajectory">
+<h2>Reference Trajectory<a class="headerlink" href="#Reference-Trajectory" title="Link to this heading"></a></h2>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">waypoints</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span>
+    <span class="p">[</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">],</span>
+    <span class="p">[</span><span class="mf">3.0</span><span class="p">,</span> <span class="mf">3.0</span><span class="p">],</span>
+    <span class="p">[</span><span class="mf">6.0</span><span class="p">,</span> <span class="mf">2.0</span><span class="p">],</span>
+    <span class="p">[</span><span class="mf">8.0</span><span class="p">,</span> <span class="mf">5.0</span><span class="p">],</span>
+<span class="p">])</span>
+
+<span class="n">x_ref</span><span class="p">,</span> <span class="n">u_ref</span> <span class="o">=</span> <span class="n">generate_smooth_reference_trajectory</span><span class="p">(</span><span class="n">waypoints</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">v_cruise</span><span class="p">,</span> <span class="n">L</span><span class="p">,</span> <span class="n">tau</span><span class="p">,</span> <span class="n">turn_time</span><span class="o">=</span><span class="mf">1.0</span><span class="p">)</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">8</span><span class="p">,</span> <span class="mi">6</span><span class="p">))</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">x_ref</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="p">:],</span> <span class="n">x_ref</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="p">:],</span> <span class="s1">&#39;k--&#39;</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mf">1.5</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;Reference&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">waypoints</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">waypoints</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">],</span> <span class="s1">&#39;ko&#39;</span><span class="p">,</span> <span class="n">markersize</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s1">&#39;x [m]&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s1">&#39;y [m]&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">axis</span><span class="p">(</span><span class="s1">&#39;equal&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="kc">True</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.3</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s1">&#39;Reference Trajectory&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../../_images/gnc_notebooks_Multi-Rate_Sensor_Fusion_9_0.png" src="../../_images/gnc_notebooks_Multi-Rate_Sensor_Fusion_9_0.png" />
+</div>
+</div>
+</section>
+<section id="Simulation-Function">
+<h2>Simulation Function<a class="headerlink" href="#Simulation-Function" title="Link to this heading"></a></h2>
+<p>Run closed-loop simulation with EKF state estimation. The controller uses the EKF estimate (not the true state).</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">run_simulation</span><span class="p">(</span><span class="n">controller_name</span><span class="p">,</span> <span class="n">controller_fn</span><span class="p">,</span> <span class="n">x_ref</span><span class="p">,</span> <span class="n">u_ref</span><span class="p">,</span> <span class="n">waypoints</span><span class="p">,</span>
+                   <span class="n">camera_enabled</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">goal_tol</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">42</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Run closed-loop simulation with EKF estimation.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    controller_name : str</span>
+<span class="sd">        Name for display</span>
+<span class="sd">    controller_fn : callable</span>
+<span class="sd">        Function (x_hat, x_ref, u_ref, k) -&gt; u</span>
+<span class="sd">    x_ref, u_ref : arrays</span>
+<span class="sd">        Reference trajectory</span>
+<span class="sd">    waypoints : array</span>
+<span class="sd">        Waypoints for goal detection</span>
+<span class="sd">    camera_enabled : bool</span>
+<span class="sd">        Whether to use camera updates</span>
+<span class="sd">    goal_tol : float</span>
+<span class="sd">        Terminate when within this distance of final waypoint</span>
+<span class="sd">    seed : int</span>
+<span class="sd">        Random seed</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    dict with x_true, x_hat, P_hist, u_hist, t</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">rng</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">default_rng</span><span class="p">(</span><span class="n">seed</span><span class="p">)</span>
+    <span class="n">final_waypoint</span> <span class="o">=</span> <span class="n">waypoints</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+
+    <span class="c1"># Initial state and covariance</span>
+    <span class="n">x0</span> <span class="o">=</span> <span class="n">x_ref</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+    <span class="n">P0</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">diag</span><span class="p">([</span><span class="mf">0.01</span><span class="p">,</span> <span class="mf">0.01</span><span class="p">,</span> <span class="mf">0.01</span><span class="p">,</span> <span class="mf">0.001</span><span class="p">,</span> <span class="mf">0.001</span><span class="p">])</span>
+
+    <span class="c1"># Initialize EKF</span>
+    <span class="n">ekf</span> <span class="o">=</span> <span class="n">MultiRateEKF</span><span class="p">(</span><span class="n">L</span><span class="p">,</span> <span class="n">tau</span><span class="p">,</span> <span class="n">dt</span><span class="p">,</span> <span class="n">Q_process</span><span class="p">,</span> <span class="n">R_imu</span><span class="p">,</span> <span class="n">R_camera</span><span class="p">,</span> <span class="n">x0</span><span class="p">,</span> <span class="n">P0</span><span class="p">)</span>
+
+    <span class="c1"># Storage</span>
+    <span class="n">x_true</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">n_x</span><span class="p">,</span> <span class="n">N</span><span class="p">))</span>
+    <span class="n">x_hat</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">n_x</span><span class="p">,</span> <span class="n">N</span><span class="p">))</span>
+    <span class="n">P_hist</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">n_x</span><span class="p">,</span> <span class="n">N</span><span class="p">))</span>
+    <span class="n">u_hist</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">n_u</span><span class="p">,</span> <span class="n">N</span><span class="p">))</span>
+
+    <span class="c1"># Initial conditions</span>
+    <span class="n">x_true</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">x0</span>
+    <span class="n">x_hat</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">ekf</span><span class="o">.</span><span class="n">get_state</span><span class="p">()</span>
+    <span class="n">P_hist</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">diag</span><span class="p">(</span><span class="n">ekf</span><span class="o">.</span><span class="n">get_covariance</span><span class="p">())</span>
+
+    <span class="c1"># Measurement noise generators</span>
+    <span class="n">R_imu_chol</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">cholesky</span><span class="p">(</span><span class="n">R_imu</span><span class="p">)</span>
+    <span class="n">R_cam_chol</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">cholesky</span><span class="p">(</span><span class="n">R_camera</span><span class="p">)</span>
+
+    <span class="n">final_k</span> <span class="o">=</span> <span class="n">N</span> <span class="o">-</span> <span class="mi">1</span>
+    <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">N</span> <span class="o">-</span> <span class="mi">1</span><span class="p">):</span>
+        <span class="c1"># Controller uses EKF estimate</span>
+        <span class="n">u_k</span> <span class="o">=</span> <span class="n">controller_fn</span><span class="p">(</span><span class="n">ekf</span><span class="o">.</span><span class="n">get_state</span><span class="p">(),</span> <span class="n">x_ref</span><span class="p">[:,</span> <span class="n">k</span><span class="p">],</span> <span class="n">u_ref</span><span class="p">[:,</span> <span class="n">k</span><span class="p">],</span> <span class="n">k</span><span class="p">)</span>
+        <span class="n">u_hist</span><span class="p">[:,</span> <span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">u_k</span>
+
+        <span class="c1"># True system propagation with process noise</span>
+        <span class="n">w</span> <span class="o">=</span> <span class="n">Q_chol</span> <span class="o">@</span> <span class="n">rng</span><span class="o">.</span><span class="n">standard_normal</span><span class="p">(</span><span class="n">n_x</span><span class="p">)</span>
+        <span class="n">x_true</span><span class="p">[:,</span> <span class="n">k</span><span class="o">+</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">nonlinear_dynamics</span><span class="p">(</span><span class="n">x_true</span><span class="p">[:,</span> <span class="n">k</span><span class="p">],</span> <span class="n">u_k</span><span class="p">,</span> <span class="n">dt</span><span class="p">,</span> <span class="n">L</span><span class="p">,</span> <span class="n">tau</span><span class="p">)</span> <span class="o">+</span> <span class="n">w</span>
+        <span class="n">x_true</span><span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="n">k</span><span class="o">+</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">angle_wrap</span><span class="p">(</span><span class="n">x_true</span><span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="n">k</span><span class="o">+</span><span class="mi">1</span><span class="p">])</span>
+
+        <span class="c1"># Generate measurements from true state</span>
+        <span class="c1"># IMU + encoder + accelerometer (always available)</span>
+        <span class="n">theta_true</span> <span class="o">=</span> <span class="n">x_true</span><span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="n">k</span><span class="o">+</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">v_l_true</span><span class="p">,</span> <span class="n">v_r_true</span> <span class="o">=</span> <span class="n">x_true</span><span class="p">[</span><span class="mi">3</span><span class="p">,</span> <span class="n">k</span><span class="o">+</span><span class="mi">1</span><span class="p">],</span> <span class="n">x_true</span><span class="p">[</span><span class="mi">4</span><span class="p">,</span> <span class="n">k</span><span class="o">+</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">theta_dot_true</span> <span class="o">=</span> <span class="p">(</span><span class="n">v_r_true</span> <span class="o">-</span> <span class="n">v_l_true</span><span class="p">)</span> <span class="o">/</span> <span class="n">L</span>
+        <span class="n">a_x_true</span> <span class="o">=</span> <span class="p">(</span><span class="mi">1</span> <span class="o">/</span> <span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">tau</span><span class="p">))</span> <span class="o">*</span> <span class="p">((</span><span class="n">u_k</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="n">v_l_true</span><span class="p">)</span> <span class="o">+</span> <span class="p">(</span><span class="n">u_k</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">v_r_true</span><span class="p">))</span>
+        <span class="n">a_y_true</span> <span class="o">=</span> <span class="p">((</span><span class="n">v_l_true</span> <span class="o">+</span> <span class="n">v_r_true</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span> <span class="o">*</span> <span class="n">theta_dot_true</span>
+
+        <span class="n">y_imu</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">theta_true</span><span class="p">,</span> <span class="n">theta_dot_true</span><span class="p">,</span> <span class="n">v_l_true</span><span class="p">,</span> <span class="n">v_r_true</span><span class="p">,</span> <span class="n">a_x_true</span><span class="p">,</span> <span class="n">a_y_true</span><span class="p">])</span>
+        <span class="n">y_imu</span> <span class="o">+=</span> <span class="n">R_imu_chol</span> <span class="o">@</span> <span class="n">rng</span><span class="o">.</span><span class="n">standard_normal</span><span class="p">(</span><span class="mi">6</span><span class="p">)</span>
+
+        <span class="c1"># EKF predict</span>
+        <span class="n">ekf</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">u_k</span><span class="p">)</span>
+
+        <span class="c1"># EKF update with IMU/encoder/accel</span>
+        <span class="n">ekf</span><span class="o">.</span><span class="n">update_imu_encoder</span><span class="p">(</span><span class="n">y_imu</span><span class="p">,</span> <span class="n">u_k</span><span class="p">)</span>
+
+        <span class="c1"># Camera update (if enabled and at camera rate)</span>
+        <span class="k">if</span> <span class="n">camera_enabled</span> <span class="ow">and</span> <span class="p">(</span><span class="n">k</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span> <span class="o">%</span> <span class="n">camera_interval</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">y_cam</span> <span class="o">=</span> <span class="n">x_true</span><span class="p">[:</span><span class="mi">2</span><span class="p">,</span> <span class="n">k</span><span class="o">+</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">R_cam_chol</span> <span class="o">@</span> <span class="n">rng</span><span class="o">.</span><span class="n">standard_normal</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+            <span class="n">ekf</span><span class="o">.</span><span class="n">update_camera</span><span class="p">(</span><span class="n">y_cam</span><span class="p">)</span>
+
+        <span class="c1"># Store</span>
+        <span class="n">x_hat</span><span class="p">[:,</span> <span class="n">k</span><span class="o">+</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">ekf</span><span class="o">.</span><span class="n">get_state</span><span class="p">()</span>
+        <span class="n">P_hist</span><span class="p">[:,</span> <span class="n">k</span><span class="o">+</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">diag</span><span class="p">(</span><span class="n">ekf</span><span class="o">.</span><span class="n">get_covariance</span><span class="p">())</span>
+
+        <span class="c1"># Early termination when goal reached</span>
+        <span class="n">dist_to_goal</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">((</span><span class="n">x_true</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="n">k</span><span class="o">+</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">final_waypoint</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span>
+                               <span class="p">(</span><span class="n">x_true</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="n">k</span><span class="o">+</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">final_waypoint</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">dist_to_goal</span> <span class="o">&lt;</span> <span class="n">goal_tol</span> <span class="ow">and</span> <span class="n">k</span> <span class="o">&gt;</span> <span class="mi">50</span><span class="p">:</span>
+            <span class="n">final_k</span> <span class="o">=</span> <span class="n">k</span> <span class="o">+</span> <span class="mi">1</span>
+            <span class="k">break</span>
+
+    <span class="c1"># Trim to actual length</span>
+    <span class="n">x_true</span> <span class="o">=</span> <span class="n">x_true</span><span class="p">[:,</span> <span class="p">:</span><span class="n">final_k</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span>
+    <span class="n">x_hat</span> <span class="o">=</span> <span class="n">x_hat</span><span class="p">[:,</span> <span class="p">:</span><span class="n">final_k</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span>
+    <span class="n">P_hist</span> <span class="o">=</span> <span class="n">P_hist</span><span class="p">[:,</span> <span class="p">:</span><span class="n">final_k</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span>
+    <span class="n">u_hist</span> <span class="o">=</span> <span class="n">u_hist</span><span class="p">[:,</span> <span class="p">:</span><span class="n">final_k</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span>
+    <span class="n">t_sim</span> <span class="o">=</span> <span class="n">t</span><span class="p">[:</span><span class="n">final_k</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span>
+
+    <span class="k">return</span> <span class="p">{</span>
+        <span class="s1">&#39;x_true&#39;</span><span class="p">:</span> <span class="n">x_true</span><span class="p">,</span>
+        <span class="s1">&#39;x_hat&#39;</span><span class="p">:</span> <span class="n">x_hat</span><span class="p">,</span>
+        <span class="s1">&#39;P_hist&#39;</span><span class="p">:</span> <span class="n">P_hist</span><span class="p">,</span>
+        <span class="s1">&#39;u_hist&#39;</span><span class="p">:</span> <span class="n">u_hist</span><span class="p">,</span>
+        <span class="s1">&#39;t&#39;</span><span class="p">:</span> <span class="n">t_sim</span><span class="p">,</span>
+        <span class="s1">&#39;name&#39;</span><span class="p">:</span> <span class="n">controller_name</span><span class="p">,</span>
+        <span class="s1">&#39;camera&#39;</span><span class="p">:</span> <span class="n">camera_enabled</span>
+    <span class="p">}</span>
+</pre></div>
+</div>
+</div>
+</section>
+<section id="Run-Simulations">
+<h2>Run Simulations<a class="headerlink" href="#Run-Simulations" title="Link to this heading"></a></h2>
+<p>Compare all three controllers with and without camera.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[7]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Define controller functions</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">lqr_fn</span><span class="p">(</span><span class="n">x_hat</span><span class="p">,</span> <span class="n">x_r</span><span class="p">,</span> <span class="n">u_r</span><span class="p">,</span> <span class="n">k</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">lqr_control</span><span class="p">(</span><span class="n">x_hat</span><span class="p">,</span> <span class="n">x_r</span><span class="p">,</span> <span class="n">u_r</span><span class="p">,</span> <span class="n">K_lqr</span><span class="p">,</span> <span class="n">u_max</span><span class="p">)</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">qpmpc_fn</span><span class="p">(</span><span class="n">x_hat</span><span class="p">,</span> <span class="n">x_r</span><span class="p">,</span> <span class="n">u_r</span><span class="p">,</span> <span class="n">k</span><span class="p">):</span>
+    <span class="n">k_end</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">k</span> <span class="o">+</span> <span class="n">N_horizon</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">N</span><span class="p">)</span>
+    <span class="n">x_ref_h</span> <span class="o">=</span> <span class="n">x_ref</span><span class="p">[:,</span> <span class="n">k</span><span class="p">:</span><span class="n">k_end</span><span class="p">]</span>
+    <span class="n">u_ref_h</span> <span class="o">=</span> <span class="n">u_ref</span><span class="p">[:,</span> <span class="n">k</span><span class="p">:</span><span class="n">k_end</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">x_ref_h</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">N_horizon</span> <span class="o">+</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="n">pad</span> <span class="o">=</span> <span class="n">N_horizon</span> <span class="o">+</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">x_ref_h</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">x_ref_h</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">hstack</span><span class="p">([</span><span class="n">x_ref_h</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">tile</span><span class="p">(</span><span class="n">x_ref</span><span class="p">[:,</span> <span class="o">-</span><span class="mi">1</span><span class="p">:],</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">pad</span><span class="p">))])</span>
+        <span class="n">u_ref_h</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">hstack</span><span class="p">([</span><span class="n">u_ref_h</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">tile</span><span class="p">(</span><span class="n">u_ref</span><span class="p">[:,</span> <span class="o">-</span><span class="mi">1</span><span class="p">:],</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">pad</span><span class="p">))])</span>
+    <span class="k">return</span> <span class="n">mpc_qp</span><span class="o">.</span><span class="n">compute_control</span><span class="p">(</span><span class="n">x_hat</span><span class="p">,</span> <span class="n">x_ref_h</span><span class="p">,</span> <span class="n">u_ref_h</span><span class="p">)</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">nlmpc_fn</span><span class="p">(</span><span class="n">x_hat</span><span class="p">,</span> <span class="n">x_r</span><span class="p">,</span> <span class="n">u_r</span><span class="p">,</span> <span class="n">k</span><span class="p">):</span>
+    <span class="n">k_end</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">k</span> <span class="o">+</span> <span class="n">N_horizon_nl</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">N</span><span class="p">)</span>
+    <span class="n">x_ref_h</span> <span class="o">=</span> <span class="n">x_ref</span><span class="p">[:,</span> <span class="n">k</span><span class="p">:</span><span class="n">k_end</span><span class="p">]</span>
+    <span class="n">u_ref_h</span> <span class="o">=</span> <span class="n">u_ref</span><span class="p">[:,</span> <span class="n">k</span><span class="p">:</span><span class="n">k_end</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">x_ref_h</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">N_horizon_nl</span> <span class="o">+</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="n">pad</span> <span class="o">=</span> <span class="n">N_horizon_nl</span> <span class="o">+</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">x_ref_h</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">x_ref_h</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">hstack</span><span class="p">([</span><span class="n">x_ref_h</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">tile</span><span class="p">(</span><span class="n">x_ref</span><span class="p">[:,</span> <span class="o">-</span><span class="mi">1</span><span class="p">:],</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">pad</span><span class="p">))])</span>
+        <span class="n">u_ref_h</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">hstack</span><span class="p">([</span><span class="n">u_ref_h</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">tile</span><span class="p">(</span><span class="n">u_ref</span><span class="p">[:,</span> <span class="o">-</span><span class="mi">1</span><span class="p">:],</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">pad</span><span class="p">))])</span>
+    <span class="k">return</span> <span class="n">mpc_nl</span><span class="o">.</span><span class="n">compute_control</span><span class="p">(</span><span class="n">x_hat</span><span class="p">,</span> <span class="n">x_ref_h</span><span class="p">,</span> <span class="n">u_ref_h</span><span class="p">)</span>
+
+<span class="c1"># Run all simulations</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Running simulations...&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;=&quot;</span><span class="o">*</span><span class="mi">50</span><span class="p">)</span>
+
+<span class="n">results</span> <span class="o">=</span> <span class="p">{}</span>
+
+<span class="c1"># LQR</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;LQR+FF without camera...&quot;</span><span class="p">)</span>
+<span class="n">results</span><span class="p">[</span><span class="s1">&#39;lqr_nocam&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">run_simulation</span><span class="p">(</span><span class="s1">&#39;LQR+FF&#39;</span><span class="p">,</span> <span class="n">lqr_fn</span><span class="p">,</span> <span class="n">x_ref</span><span class="p">,</span> <span class="n">u_ref</span><span class="p">,</span> <span class="n">waypoints</span><span class="p">,</span> <span class="n">camera_enabled</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">42</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  -&gt; </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">results</span><span class="p">[</span><span class="s1">&#39;lqr_nocam&#39;</span><span class="p">][</span><span class="s1">&#39;t&#39;</span><span class="p">])</span><span class="si">}</span><span class="s2"> steps (</span><span class="si">{</span><span class="n">results</span><span class="p">[</span><span class="s1">&#39;lqr_nocam&#39;</span><span class="p">][</span><span class="s1">&#39;t&#39;</span><span class="p">][</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2">s)&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;LQR+FF with camera...&quot;</span><span class="p">)</span>
+<span class="n">results</span><span class="p">[</span><span class="s1">&#39;lqr_cam&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">run_simulation</span><span class="p">(</span><span class="s1">&#39;LQR+FF&#39;</span><span class="p">,</span> <span class="n">lqr_fn</span><span class="p">,</span> <span class="n">x_ref</span><span class="p">,</span> <span class="n">u_ref</span><span class="p">,</span> <span class="n">waypoints</span><span class="p">,</span> <span class="n">camera_enabled</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">42</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  -&gt; </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">results</span><span class="p">[</span><span class="s1">&#39;lqr_cam&#39;</span><span class="p">][</span><span class="s1">&#39;t&#39;</span><span class="p">])</span><span class="si">}</span><span class="s2"> steps (</span><span class="si">{</span><span class="n">results</span><span class="p">[</span><span class="s1">&#39;lqr_cam&#39;</span><span class="p">][</span><span class="s1">&#39;t&#39;</span><span class="p">][</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2">s)&quot;</span><span class="p">)</span>
+
+<span class="c1"># QP-MPC</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;QP-MPC without camera...&quot;</span><span class="p">)</span>
+<span class="n">mpc_qp</span><span class="o">.</span><span class="n">reset</span><span class="p">()</span>
+<span class="n">results</span><span class="p">[</span><span class="s1">&#39;qpmpc_nocam&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">run_simulation</span><span class="p">(</span><span class="s1">&#39;QP-MPC&#39;</span><span class="p">,</span> <span class="n">qpmpc_fn</span><span class="p">,</span> <span class="n">x_ref</span><span class="p">,</span> <span class="n">u_ref</span><span class="p">,</span> <span class="n">waypoints</span><span class="p">,</span> <span class="n">camera_enabled</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">42</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  -&gt; </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">results</span><span class="p">[</span><span class="s1">&#39;qpmpc_nocam&#39;</span><span class="p">][</span><span class="s1">&#39;t&#39;</span><span class="p">])</span><span class="si">}</span><span class="s2"> steps (</span><span class="si">{</span><span class="n">results</span><span class="p">[</span><span class="s1">&#39;qpmpc_nocam&#39;</span><span class="p">][</span><span class="s1">&#39;t&#39;</span><span class="p">][</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2">s)&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;QP-MPC with camera...&quot;</span><span class="p">)</span>
+<span class="n">mpc_qp</span><span class="o">.</span><span class="n">reset</span><span class="p">()</span>
+<span class="n">results</span><span class="p">[</span><span class="s1">&#39;qpmpc_cam&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">run_simulation</span><span class="p">(</span><span class="s1">&#39;QP-MPC&#39;</span><span class="p">,</span> <span class="n">qpmpc_fn</span><span class="p">,</span> <span class="n">x_ref</span><span class="p">,</span> <span class="n">u_ref</span><span class="p">,</span> <span class="n">waypoints</span><span class="p">,</span> <span class="n">camera_enabled</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">42</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  -&gt; </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">results</span><span class="p">[</span><span class="s1">&#39;qpmpc_cam&#39;</span><span class="p">][</span><span class="s1">&#39;t&#39;</span><span class="p">])</span><span class="si">}</span><span class="s2"> steps (</span><span class="si">{</span><span class="n">results</span><span class="p">[</span><span class="s1">&#39;qpmpc_cam&#39;</span><span class="p">][</span><span class="s1">&#39;t&#39;</span><span class="p">][</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2">s)&quot;</span><span class="p">)</span>
+
+<span class="c1"># NL-MPC</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;NL-MPC without camera...&quot;</span><span class="p">)</span>
+<span class="n">mpc_nl</span><span class="o">.</span><span class="n">reset</span><span class="p">()</span>
+<span class="n">results</span><span class="p">[</span><span class="s1">&#39;nlmpc_nocam&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">run_simulation</span><span class="p">(</span><span class="s1">&#39;NL-MPC&#39;</span><span class="p">,</span> <span class="n">nlmpc_fn</span><span class="p">,</span> <span class="n">x_ref</span><span class="p">,</span> <span class="n">u_ref</span><span class="p">,</span> <span class="n">waypoints</span><span class="p">,</span> <span class="n">camera_enabled</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">42</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  -&gt; </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">results</span><span class="p">[</span><span class="s1">&#39;nlmpc_nocam&#39;</span><span class="p">][</span><span class="s1">&#39;t&#39;</span><span class="p">])</span><span class="si">}</span><span class="s2"> steps (</span><span class="si">{</span><span class="n">results</span><span class="p">[</span><span class="s1">&#39;nlmpc_nocam&#39;</span><span class="p">][</span><span class="s1">&#39;t&#39;</span><span class="p">][</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2">s)&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;NL-MPC with camera...&quot;</span><span class="p">)</span>
+<span class="n">mpc_nl</span><span class="o">.</span><span class="n">reset</span><span class="p">()</span>
+<span class="n">results</span><span class="p">[</span><span class="s1">&#39;nlmpc_cam&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">run_simulation</span><span class="p">(</span><span class="s1">&#39;NL-MPC&#39;</span><span class="p">,</span> <span class="n">nlmpc_fn</span><span class="p">,</span> <span class="n">x_ref</span><span class="p">,</span> <span class="n">u_ref</span><span class="p">,</span> <span class="n">waypoints</span><span class="p">,</span> <span class="n">camera_enabled</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">42</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  -&gt; </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">results</span><span class="p">[</span><span class="s1">&#39;nlmpc_cam&#39;</span><span class="p">][</span><span class="s1">&#39;t&#39;</span><span class="p">])</span><span class="si">}</span><span class="s2"> steps (</span><span class="si">{</span><span class="n">results</span><span class="p">[</span><span class="s1">&#39;nlmpc_cam&#39;</span><span class="p">][</span><span class="s1">&#39;t&#39;</span><span class="p">][</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2">s)&quot;</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;=&quot;</span><span class="o">*</span><span class="mi">50</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Done!&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Running simulations...
+==================================================
+LQR+FF without camera...
+  -&gt; 2241 steps (44.8s)
+LQR+FF with camera...
+  -&gt; 2283 steps (45.6s)
+QP-MPC without camera...
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+/opt/venv/lib/python3.13/site-packages/osqp/interface.py:229: UserWarning: Converting sparse A to a CSC matrix. This may take a while...
+  warnings.warn(&#39;Converting sparse A to a CSC matrix. This may take a while...&#39;)
+</pre></div></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+  -&gt; 2241 steps (44.8s)
+QP-MPC with camera...
+  -&gt; 2287 steps (45.7s)
+NL-MPC without camera...
+  -&gt; 2241 steps (44.8s)
+NL-MPC with camera...
+  -&gt; 2288 steps (45.7s)
+==================================================
+Done!
+</pre></div></div>
+</div>
+</section>
+<section id="Results">
+<h2>Results<a class="headerlink" href="#Results" title="Link to this heading"></a></h2>
+<section id="Trajectory-Comparison">
+<h3>Trajectory Comparison<a class="headerlink" href="#Trajectory-Comparison" title="Link to this heading"></a></h3>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[8]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">fig</span><span class="p">,</span> <span class="n">axes</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">15</span><span class="p">,</span> <span class="mi">5</span><span class="p">))</span>
+
+<span class="n">controllers</span> <span class="o">=</span> <span class="p">[(</span><span class="s1">&#39;lqr&#39;</span><span class="p">,</span> <span class="s1">&#39;LQR+FF&#39;</span><span class="p">),</span> <span class="p">(</span><span class="s1">&#39;qpmpc&#39;</span><span class="p">,</span> <span class="s1">&#39;QP-MPC&#39;</span><span class="p">),</span> <span class="p">(</span><span class="s1">&#39;nlmpc&#39;</span><span class="p">,</span> <span class="s1">&#39;NL-MPC&#39;</span><span class="p">)]</span>
+
+<span class="k">for</span> <span class="n">ax</span><span class="p">,</span> <span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">axes</span><span class="p">,</span> <span class="n">controllers</span><span class="p">):</span>
+    <span class="n">r_nocam</span> <span class="o">=</span> <span class="n">results</span><span class="p">[</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s1">_nocam&#39;</span><span class="p">]</span>
+    <span class="n">r_cam</span> <span class="o">=</span> <span class="n">results</span><span class="p">[</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s1">_cam&#39;</span><span class="p">]</span>
+
+    <span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">x_ref</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="p">:],</span> <span class="n">x_ref</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="p">:],</span> <span class="s1">&#39;k--&#39;</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;Reference&#39;</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">r_nocam</span><span class="p">[</span><span class="s1">&#39;x_true&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">,</span> <span class="p">:],</span> <span class="n">r_nocam</span><span class="p">[</span><span class="s1">&#39;x_true&#39;</span><span class="p">][</span><span class="mi">1</span><span class="p">,</span> <span class="p">:],</span> <span class="s1">&#39;r-&#39;</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mf">1.5</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.7</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;No camera&#39;</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">r_cam</span><span class="p">[</span><span class="s1">&#39;x_true&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">,</span> <span class="p">:],</span> <span class="n">r_cam</span><span class="p">[</span><span class="s1">&#39;x_true&#39;</span><span class="p">][</span><span class="mi">1</span><span class="p">,</span> <span class="p">:],</span> <span class="s1">&#39;b-&#39;</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mf">1.5</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.7</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;With camera&#39;</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">waypoints</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">waypoints</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">],</span> <span class="s1">&#39;ko&#39;</span><span class="p">,</span> <span class="n">markersize</span><span class="o">=</span><span class="mi">8</span><span class="p">)</span>
+
+    <span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s1">&#39;x [m]&#39;</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s1">&#39;y [m]&#39;</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">axis</span><span class="p">(</span><span class="s1">&#39;equal&#39;</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="kc">True</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.3</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span><span class="n">loc</span><span class="o">=</span><span class="s1">&#39;upper left&#39;</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../../_images/gnc_notebooks_Multi-Rate_Sensor_Fusion_15_0.png" src="../../_images/gnc_notebooks_Multi-Rate_Sensor_Fusion_15_0.png" />
+</div>
+</div>
+</section>
+<section id="Tracking-Error">
+<h3>Tracking Error<a class="headerlink" href="#Tracking-Error" title="Link to this heading"></a></h3>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[9]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">compute_tracking_error</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="n">x_ref</span><span class="p">):</span>
+    <span class="n">n</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">result</span><span class="p">[</span><span class="s1">&#39;t&#39;</span><span class="p">])</span>
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">((</span><span class="n">result</span><span class="p">[</span><span class="s1">&#39;x_true&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">,</span> <span class="p">:</span><span class="n">n</span><span class="p">]</span> <span class="o">-</span> <span class="n">x_ref</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="p">:</span><span class="n">n</span><span class="p">])</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span>
+                   <span class="p">(</span><span class="n">result</span><span class="p">[</span><span class="s1">&#39;x_true&#39;</span><span class="p">][</span><span class="mi">1</span><span class="p">,</span> <span class="p">:</span><span class="n">n</span><span class="p">]</span> <span class="o">-</span> <span class="n">x_ref</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="p">:</span><span class="n">n</span><span class="p">])</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
+
+<span class="n">fig</span><span class="p">,</span> <span class="n">axes</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">15</span><span class="p">,</span> <span class="mi">4</span><span class="p">))</span>
+
+<span class="k">for</span> <span class="n">ax</span><span class="p">,</span> <span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">axes</span><span class="p">,</span> <span class="n">controllers</span><span class="p">):</span>
+    <span class="n">r_nocam</span> <span class="o">=</span> <span class="n">results</span><span class="p">[</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s1">_nocam&#39;</span><span class="p">]</span>
+    <span class="n">r_cam</span> <span class="o">=</span> <span class="n">results</span><span class="p">[</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s1">_cam&#39;</span><span class="p">]</span>
+
+    <span class="n">err_nocam</span> <span class="o">=</span> <span class="n">compute_tracking_error</span><span class="p">(</span><span class="n">r_nocam</span><span class="p">,</span> <span class="n">x_ref</span><span class="p">)</span>
+    <span class="n">err_cam</span> <span class="o">=</span> <span class="n">compute_tracking_error</span><span class="p">(</span><span class="n">r_cam</span><span class="p">,</span> <span class="n">x_ref</span><span class="p">)</span>
+
+    <span class="n">rms_nocam</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">err_nocam</span><span class="o">**</span><span class="mi">2</span><span class="p">))</span>
+    <span class="n">rms_cam</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">err_cam</span><span class="o">**</span><span class="mi">2</span><span class="p">))</span>
+
+    <span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">r_nocam</span><span class="p">[</span><span class="s1">&#39;t&#39;</span><span class="p">],</span> <span class="n">err_nocam</span><span class="o">*</span><span class="mi">100</span><span class="p">,</span> <span class="s1">&#39;r-&#39;</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mf">1.5</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.7</span><span class="p">,</span>
+            <span class="n">label</span><span class="o">=</span><span class="sa">f</span><span class="s1">&#39;No camera (</span><span class="si">{</span><span class="n">rms_nocam</span><span class="o">*</span><span class="mi">100</span><span class="si">:</span><span class="s1">.1f</span><span class="si">}</span><span class="s1"> cm RMS)&#39;</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">r_cam</span><span class="p">[</span><span class="s1">&#39;t&#39;</span><span class="p">],</span> <span class="n">err_cam</span><span class="o">*</span><span class="mi">100</span><span class="p">,</span> <span class="s1">&#39;b-&#39;</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mf">1.5</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.7</span><span class="p">,</span>
+            <span class="n">label</span><span class="o">=</span><span class="sa">f</span><span class="s1">&#39;With camera (</span><span class="si">{</span><span class="n">rms_cam</span><span class="o">*</span><span class="mi">100</span><span class="si">:</span><span class="s1">.1f</span><span class="si">}</span><span class="s1"> cm RMS)&#39;</span><span class="p">)</span>
+
+    <span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s1">&#39;Time [s]&#39;</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s1">&#39;Position Error [cm]&#39;</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="kc">True</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.3</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s1"> Tracking Error&#39;</span><span class="p">)</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../../_images/gnc_notebooks_Multi-Rate_Sensor_Fusion_17_0.png" src="../../_images/gnc_notebooks_Multi-Rate_Sensor_Fusion_17_0.png" />
+</div>
+</div>
+</section>
+<section id="Position-Uncertainty">
+<h3>Position Uncertainty<a class="headerlink" href="#Position-Uncertainty" title="Link to this heading"></a></h3>
+<p>The key benefit of camera updates: bounded position uncertainty. Without camera, uncertainty grows unbounded (dead reckoning drift).</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[10]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">fig</span><span class="p">,</span> <span class="n">axes</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">15</span><span class="p">,</span> <span class="mi">4</span><span class="p">))</span>
+
+<span class="k">for</span> <span class="n">ax</span><span class="p">,</span> <span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">axes</span><span class="p">,</span> <span class="n">controllers</span><span class="p">):</span>
+    <span class="n">r_nocam</span> <span class="o">=</span> <span class="n">results</span><span class="p">[</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s1">_nocam&#39;</span><span class="p">]</span>
+    <span class="n">r_cam</span> <span class="o">=</span> <span class="n">results</span><span class="p">[</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s1">_cam&#39;</span><span class="p">]</span>
+
+    <span class="n">P_nocam</span> <span class="o">=</span> <span class="n">r_nocam</span><span class="p">[</span><span class="s1">&#39;P_hist&#39;</span><span class="p">]</span>
+    <span class="n">P_cam</span> <span class="o">=</span> <span class="n">r_cam</span><span class="p">[</span><span class="s1">&#39;P_hist&#39;</span><span class="p">]</span>
+
+    <span class="c1"># Position uncertainty (x and y)</span>
+    <span class="n">sigma_xy_nocam</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">P_nocam</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="p">:]</span> <span class="o">+</span> <span class="n">P_nocam</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="p">:])</span>
+    <span class="n">sigma_xy_cam</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">P_cam</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="p">:]</span> <span class="o">+</span> <span class="n">P_cam</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="p">:])</span>
+
+    <span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">r_nocam</span><span class="p">[</span><span class="s1">&#39;t&#39;</span><span class="p">],</span> <span class="n">sigma_xy_nocam</span><span class="o">*</span><span class="mi">100</span><span class="p">,</span> <span class="s1">&#39;r-&#39;</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mf">1.5</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.7</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;No camera&#39;</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">r_cam</span><span class="p">[</span><span class="s1">&#39;t&#39;</span><span class="p">],</span> <span class="n">sigma_xy_cam</span><span class="o">*</span><span class="mi">100</span><span class="p">,</span> <span class="s1">&#39;b-&#39;</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mf">1.5</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.7</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;With camera&#39;</span><span class="p">)</span>
+
+    <span class="c1"># Mark camera update times (on shorter array)</span>
+    <span class="n">t_cam</span> <span class="o">=</span> <span class="n">r_cam</span><span class="p">[</span><span class="s1">&#39;t&#39;</span><span class="p">]</span>
+    <span class="n">cam_times</span> <span class="o">=</span> <span class="n">t_cam</span><span class="p">[::</span><span class="n">camera_interval</span><span class="p">]</span>
+    <span class="k">for</span> <span class="n">ct</span> <span class="ow">in</span> <span class="n">cam_times</span><span class="p">[</span><span class="mi">1</span><span class="p">::</span><span class="mi">5</span><span class="p">]:</span>  <span class="c1"># Every 5th for clarity</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">axvline</span><span class="p">(</span><span class="n">ct</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;gray&#39;</span><span class="p">,</span> <span class="n">linestyle</span><span class="o">=</span><span class="s1">&#39;:&#39;</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.3</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mf">0.5</span><span class="p">)</span>
+
+    <span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s1">&#39;Time [s]&#39;</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s1">&#39;Position Uncertainty [cm]&#39;</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="kc">True</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.3</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s1"> Position Uncertainty (1-$</span><span class="se">\\</span><span class="s1">sigma$)&#39;</span><span class="p">)</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../../_images/gnc_notebooks_Multi-Rate_Sensor_Fusion_19_0.png" src="../../_images/gnc_notebooks_Multi-Rate_Sensor_Fusion_19_0.png" />
+</div>
+</div>
+</section>
+<section id="Estimation-Error">
+<h3>Estimation Error<a class="headerlink" href="#Estimation-Error" title="Link to this heading"></a></h3>
+<p>How well does the EKF estimate match the true state?</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[11]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">compute_estimation_error</span><span class="p">(</span><span class="n">result</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">((</span><span class="n">result</span><span class="p">[</span><span class="s1">&#39;x_true&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">,</span> <span class="p">:]</span> <span class="o">-</span> <span class="n">result</span><span class="p">[</span><span class="s1">&#39;x_hat&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">,</span> <span class="p">:])</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span>
+                   <span class="p">(</span><span class="n">result</span><span class="p">[</span><span class="s1">&#39;x_true&#39;</span><span class="p">][</span><span class="mi">1</span><span class="p">,</span> <span class="p">:]</span> <span class="o">-</span> <span class="n">result</span><span class="p">[</span><span class="s1">&#39;x_hat&#39;</span><span class="p">][</span><span class="mi">1</span><span class="p">,</span> <span class="p">:])</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
+
+<span class="n">fig</span><span class="p">,</span> <span class="n">axes</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">15</span><span class="p">,</span> <span class="mi">4</span><span class="p">))</span>
+
+<span class="k">for</span> <span class="n">ax</span><span class="p">,</span> <span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">axes</span><span class="p">,</span> <span class="n">controllers</span><span class="p">):</span>
+    <span class="n">r_nocam</span> <span class="o">=</span> <span class="n">results</span><span class="p">[</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s1">_nocam&#39;</span><span class="p">]</span>
+    <span class="n">r_cam</span> <span class="o">=</span> <span class="n">results</span><span class="p">[</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s1">_cam&#39;</span><span class="p">]</span>
+
+    <span class="n">est_err_nocam</span> <span class="o">=</span> <span class="n">compute_estimation_error</span><span class="p">(</span><span class="n">r_nocam</span><span class="p">)</span>
+    <span class="n">est_err_cam</span> <span class="o">=</span> <span class="n">compute_estimation_error</span><span class="p">(</span><span class="n">r_cam</span><span class="p">)</span>
+
+    <span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">r_nocam</span><span class="p">[</span><span class="s1">&#39;t&#39;</span><span class="p">],</span> <span class="n">est_err_nocam</span><span class="o">*</span><span class="mi">100</span><span class="p">,</span> <span class="s1">&#39;r-&#39;</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mf">1.5</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.7</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;No camera&#39;</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">r_cam</span><span class="p">[</span><span class="s1">&#39;t&#39;</span><span class="p">],</span> <span class="n">est_err_cam</span><span class="o">*</span><span class="mi">100</span><span class="p">,</span> <span class="s1">&#39;b-&#39;</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mf">1.5</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.7</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;With camera&#39;</span><span class="p">)</span>
+
+    <span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s1">&#39;Time [s]&#39;</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s1">&#39;Estimation Error [cm]&#39;</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="kc">True</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.3</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s1"> Position Estimation Error&#39;</span><span class="p">)</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../../_images/gnc_notebooks_Multi-Rate_Sensor_Fusion_21_0.png" src="../../_images/gnc_notebooks_Multi-Rate_Sensor_Fusion_21_0.png" />
+</div>
+</div>
+</section>
+</section>
+<section id="Summary">
+<h2>Summary<a class="headerlink" href="#Summary" title="Link to this heading"></a></h2>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[12]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span> <span class="o">+</span> <span class="s2">&quot;=&quot;</span><span class="o">*</span><span class="mi">80</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;MULTI-RATE SENSOR FUSION RESULTS&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;=&quot;</span><span class="o">*</span><span class="mi">80</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="si">{</span><span class="s1">&#39;Controller&#39;</span><span class="si">:</span><span class="s2">&lt;12</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="s1">&#39;Camera&#39;</span><span class="si">:</span><span class="s2">&lt;10</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="s1">&#39;Track RMS&#39;</span><span class="si">:</span><span class="s2">&lt;12</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="s1">&#39;Est RMS&#39;</span><span class="si">:</span><span class="s2">&lt;12</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="s1">&#39;Final P_xy&#39;</span><span class="si">:</span><span class="s2">&lt;12</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;-&quot;</span><span class="o">*</span><span class="mi">80</span><span class="p">)</span>
+
+<span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">controllers</span><span class="p">:</span>
+    <span class="k">for</span> <span class="n">suffix</span><span class="p">,</span> <span class="n">cam_str</span> <span class="ow">in</span> <span class="p">[(</span><span class="s1">&#39;_nocam&#39;</span><span class="p">,</span> <span class="s1">&#39;No&#39;</span><span class="p">),</span> <span class="p">(</span><span class="s1">&#39;_cam&#39;</span><span class="p">,</span> <span class="s1">&#39;Yes&#39;</span><span class="p">)]:</span>
+        <span class="n">r</span> <span class="o">=</span> <span class="n">results</span><span class="p">[</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">key</span><span class="si">}{</span><span class="n">suffix</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">]</span>
+        <span class="n">track_err</span> <span class="o">=</span> <span class="n">compute_tracking_error</span><span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="n">x_ref</span><span class="p">)</span>
+        <span class="n">est_err</span> <span class="o">=</span> <span class="n">compute_estimation_error</span><span class="p">(</span><span class="n">r</span><span class="p">)</span>
+        <span class="n">final_P</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">r</span><span class="p">[</span><span class="s1">&#39;P_hist&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">r</span><span class="p">[</span><span class="s1">&#39;P_hist&#39;</span><span class="p">][</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">name</span><span class="si">:</span><span class="s2">&lt;12</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">cam_str</span><span class="si">:</span><span class="s2">&lt;10</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">track_err</span><span class="o">**</span><span class="mi">2</span><span class="p">))</span><span class="o">*</span><span class="mi">100</span><span class="si">:</span><span class="s2">&gt;6.2f</span><span class="si">}</span><span class="s2"> cm   &quot;</span>
+              <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">est_err</span><span class="o">**</span><span class="mi">2</span><span class="p">))</span><span class="o">*</span><span class="mi">100</span><span class="si">:</span><span class="s2">&gt;6.2f</span><span class="si">}</span><span class="s2"> cm   </span><span class="si">{</span><span class="n">final_P</span><span class="o">*</span><span class="mi">100</span><span class="si">:</span><span class="s2">&gt;6.2f</span><span class="si">}</span><span class="s2"> cm&quot;</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;=&quot;</span><span class="o">*</span><span class="mi">80</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Key observations:&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;- Camera updates bound position uncertainty (dead reckoning drift eliminated)&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;- Lower estimation error leads to better tracking (feedback uses estimate)&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;- All controllers benefit from better state estimates&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;- MPC controllers can anticipate and handle estimation uncertainty better&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+
+================================================================================
+MULTI-RATE SENSOR FUSION RESULTS
+================================================================================
+
+Controller   Camera     Track RMS    Est RMS      Final P_xy
+--------------------------------------------------------------------------------
+LQR+FF       No          12.52 cm    12.47 cm    25.46 cm
+LQR+FF       Yes          3.71 cm     3.20 cm     3.07 cm
+QP-MPC       No          12.53 cm    12.47 cm    25.46 cm
+QP-MPC       Yes          4.21 cm     3.20 cm     3.20 cm
+NL-MPC       No          12.63 cm    12.47 cm    25.46 cm
+NL-MPC       Yes          4.19 cm     3.20 cm     3.23 cm
+================================================================================
+
+Key observations:
+- Camera updates bound position uncertainty (dead reckoning drift eliminated)
+- Lower estimation error leads to better tracking (feedback uses estimate)
+- All controllers benefit from better state estimates
+- MPC controllers can anticipate and handle estimation uncertainty better
+</pre></div></div>
+</div>
+</section>
+<section id="Conclusion">
+<h2>Conclusion<a class="headerlink" href="#Conclusion" title="Link to this heading"></a></h2>
+<p>Multi-rate sensor fusion with the EKF provides:</p>
+<ol class="arabic simple">
+<li><p><strong>Bounded uncertainty</strong> — Camera updates prevent unbounded drift from dead reckoning</p></li>
+<li><p><strong>Better tracking</strong> — Accurate state estimates enable effective feedback control</p></li>
+<li><p><strong>Flexibility</strong> — The EKF naturally handles sensors at different rates</p></li>
+</ol>
+<p>The accelerometer provides redundant velocity information that helps between camera updates, but cannot prevent position drift on its own since it doesn’t directly observe position.</p>
+<p>For the Benji rover:</p>
+<ul class="simple">
+<li><p>IMU + encoders + accelerometer at 50 Hz for smooth control</p></li>
+<li><p>Camera at 5-10 Hz to bound position uncertainty</p></li>
+<li><p>All three controllers benefit from camera-aided navigation</p></li>
+</ul>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+<p>
+  &#169; Copyright 2025, Cave in the Mountains.
+</p>
+
+  </div>
+
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -19,12 +19,11 @@
       <script src="../_static/doctools.js?v=9bcbadda"></script>
       <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
       <script type="module" src="../_static/js/custom.js?v=13a5d2d9"></script>
-      <script type="module" src="../_static/js/dark-mode-toggle-stylesheets-loader.min.js?v=fbd25d3f"></script>
-      <script type="module" src="../_static/js/dark-mode-toggle.min.mjs?v=0b68a07b"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
     <script src="../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="Guidance, Navigation, and Control (GNC)" href="../gnc/index.html" />
+    <link rel="next" title="Guidance, Navigation, and Control" href="../gnc/index.html" />
     <link rel="prev" title="4. Use embedded linux via Yocto for the compute platform" href="0004-use-embedded-linux-via-yocto-for-the-compute-platform.html" />
   <meta name="color-scheme" content="dark light">
   
@@ -62,24 +61,27 @@
               <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
 <ul class="current">
 <li class="toctree-l1 current"><a class="reference internal" href="../architecture/index.html">Architecture</a><ul class="current">
-<li class="toctree-l2"><a class="reference internal" href="0001-record-architecture-decisions.html">1. Record architecture decisions</a></li>
-<li class="toctree-l2"><a class="reference internal" href="0002-split-compute-and-real-time-control-to-separate-processors.html">2. Split compute and real time control to separate processors</a></li>
-<li class="toctree-l2"><a class="reference internal" href="0003-use-zephyr-for-the-rt-control-core.html">3. Use Zephyr for the RT control core</a></li>
-<li class="toctree-l2"><a class="reference internal" href="0004-use-embedded-linux-via-yocto-for-the-compute-platform.html">4. Use embedded linux via Yocto for the compute platform</a></li>
-<li class="toctree-l2 current"><a class="current reference internal" href="#">5. Version and build all apps as a single entity</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#status">Status</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#context">Context</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#decision">Decision</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#consequences">Consequences</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="#pros">Pros</a></li>
-<li class="toctree-l4"><a class="reference internal" href="#cons">Cons</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="../architecture/index.html#architectural-decision-records">Architectural Decision Records</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="0001-record-architecture-decisions.html">1. Record architecture decisions</a></li>
+<li class="toctree-l3"><a class="reference internal" href="0002-split-compute-and-real-time-control-to-separate-processors.html">2. Split compute and real time control to separate processors</a></li>
+<li class="toctree-l3"><a class="reference internal" href="0003-use-zephyr-for-the-rt-control-core.html">3. Use Zephyr for the RT control core</a></li>
+<li class="toctree-l3"><a class="reference internal" href="0004-use-embedded-linux-via-yocto-for-the-compute-platform.html">4. Use embedded linux via Yocto for the compute platform</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">5. Version and build all apps as a single entity</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#status">Status</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#context">Context</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#decision">Decision</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#consequences">Consequences</a><ul>
+<li class="toctree-l5"><a class="reference internal" href="#pros">Pros</a></li>
+<li class="toctree-l5"><a class="reference internal" href="#cons">Cons</a></li>
 </ul>
 </li>
 </ul>
 </li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="../gnc/index.html">Guidance, Navigation, and Control (GNC)</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../gnc/index.html">Guidance, Navigation, and Control</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../hardware/index.html">Hardware</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../projects/index.html">Projects</a></li>
 </ul>
@@ -124,7 +126,7 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
              
-  <section id="version-and-build-all-apps-as-a-single-entity">
+  <section class="tex2jax_ignore mathjax_ignore" id="version-and-build-all-apps-as-a-single-entity">
 <h1>5. Version and build all apps as a single entity<a class="headerlink" href="#version-and-build-all-apps-as-a-single-entity" title="Link to this heading"></a></h1>
 <p>Date: 2025-11-23</p>
 <section id="status">

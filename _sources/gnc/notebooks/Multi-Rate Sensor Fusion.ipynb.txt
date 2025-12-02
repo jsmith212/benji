@@ -1,0 +1,786 @@
+{
+ "cells": [
+  {
+   "cell_type": "markdown",
+   "id": "title",
+   "metadata": {},
+   "source": [
+    "# Multi-Rate Sensor Fusion\n",
+    "\n",
+    "This notebook demonstrates multi-rate Extended Kalman Filter (EKF) sensor fusion for the Benji rover. The key insight is that different sensors operate at different rates:\n",
+    "\n",
+    "| Sensor | Rate | Measurements |\n",
+    "|--------|------|-------------|\n",
+    "| IMU (gyro) | 50 Hz | $\\theta$, $\\dot{\\theta}$ |\n",
+    "| Wheel encoders | 50 Hz | $v_l$, $v_r$ |\n",
+    "| Accelerometer | 50 Hz | $a_x$, $a_y$ |\n",
+    "| Camera | 5 Hz | $x$, $y$ |\n",
+    "\n",
+    "The EKF handles this naturally: predict at the control rate, update with whatever measurements are available.\n",
+    "\n",
+    "We compare trajectory tracking with and without camera position updates across all three controllers (LQR+FF, QP-MPC, NL-MPC)."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "imports",
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2025-11-29T03:26:10.279029Z",
+     "iopub.status.busy": "2025-11-29T03:26:10.278857Z",
+     "iopub.status.idle": "2025-11-29T03:26:11.403355Z",
+     "shell.execute_reply": "2025-11-29T03:26:11.401695Z"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "import numpy as np\n",
+    "import matplotlib.pyplot as plt\n",
+    "from scipy.linalg import solve_discrete_are\n",
+    "import time\n",
+    "\n",
+    "from utils import angle_wrap, state_error, generate_smooth_reference_trajectory\n",
+    "from kalman import MultiRateEKF\n",
+    "from mpc_controller import QPMPC, NonlinearMPC, compute_jacobians_at_state"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "params-heading",
+   "metadata": {},
+   "source": [
+    "## Parameters"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "params",
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2025-11-29T03:26:11.405448Z",
+     "iopub.status.busy": "2025-11-29T03:26:11.405198Z",
+     "iopub.status.idle": "2025-11-29T03:26:11.411876Z",
+     "shell.execute_reply": "2025-11-29T03:26:11.410184Z"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "# Robot parameters\n",
+    "L = 0.14        # wheelbase [m]\n",
+    "tau = 0.2       # motor time constant [s]\n",
+    "v_cruise = 0.25 # cruise speed [m/s]\n",
+    "u_max = 0.5     # max wheel command [m/s]\n",
+    "\n",
+    "# State dimensions\n",
+    "n_x, n_u = 5, 2\n",
+    "\n",
+    "# Simulation parameters\n",
+    "T_final = 60.0\n",
+    "dt = 0.02       # 50 Hz control/estimation rate\n",
+    "t = np.arange(0, T_final, dt)\n",
+    "N = len(t)\n",
+    "\n",
+    "# Camera parameters\n",
+    "camera_rate = 5.0  # Hz\n",
+    "camera_interval = int((1.0 / camera_rate) / dt)  # steps between camera updates\n",
+    "\n",
+    "# Process noise covariance\n",
+    "Q_process = np.diag([1e-5, 1e-5, 1e-6, 1e-4, 1e-4])\n",
+    "Q_chol = np.linalg.cholesky(Q_process)\n",
+    "\n",
+    "# IMU + Encoder measurement noise (always available)\n",
+    "# Measurements: [theta, theta_dot, v_l, v_r, a_x, a_y]\n",
+    "R_imu = np.diag([1e-4, 1e-3, 1e-4, 1e-4, 1e-2, 1e-2])\n",
+    "\n",
+    "# Camera measurement noise\n",
+    "sigma_camera = 0.05  # 5 cm position noise\n",
+    "R_camera = np.diag([sigma_camera**2, sigma_camera**2])\n",
+    "\n",
+    "print(f\"Control rate: {1/dt:.0f} Hz\")\n",
+    "print(f\"Camera rate: {camera_rate:.0f} Hz (every {camera_interval} steps)\")\n",
+    "print(f\"Camera noise: {sigma_camera*100:.0f} cm (1-sigma)\")"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "ne5rygsagvr",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "def nonlinear_dynamics(x, u, dt_step, L, tau):\n",
+    "    \"\"\"\n",
+    "    Propagate state using nonlinear tank drive dynamics.\n",
+    "    \n",
+    "    State: [x, y, theta, v_l, v_r]\n",
+    "    Input: [u_l, u_r] (wheel velocity commands)\n",
+    "    \"\"\"\n",
+    "    x_pos, y_pos, theta, v_l, v_r = x\n",
+    "    u_l, u_r = u\n",
+    "    \n",
+    "    v_avg = (v_l + v_r) / 2.0\n",
+    "    \n",
+    "    x_dot = v_avg * np.cos(theta)\n",
+    "    y_dot = v_avg * np.sin(theta)\n",
+    "    theta_dot = (v_r - v_l) / L\n",
+    "    v_l_dot = (-v_l + u_l) / tau\n",
+    "    v_r_dot = (-v_r + u_r) / tau\n",
+    "    \n",
+    "    return np.array([\n",
+    "        x_pos + x_dot * dt_step,\n",
+    "        y_pos + y_dot * dt_step,\n",
+    "        theta + theta_dot * dt_step,\n",
+    "        v_l + v_l_dot * dt_step,\n",
+    "        v_r + v_r_dot * dt_step\n",
+    "    ])"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "ekf-heading",
+   "metadata": {},
+   "source": [
+    "## Extended Kalman Filter\n",
+    "\n",
+    "The EKF uses:\n",
+    "- **Nonlinear dynamics** for prediction\n",
+    "- **Linearized measurement models** for updates\n",
+    "\n",
+    "The IMU+encoder measurement includes the accelerometer, which provides body-frame accelerations:\n",
+    "\n",
+    "$$a_x = \\frac{\\dot{v}_l + \\dot{v}_r}{2} = \\frac{1}{2\\tau}\\left((u_l - v_l) + (u_r - v_r)\\right)$$\n",
+    "$$a_y = \\frac{v_l + v_r}{2} \\cdot \\dot{\\theta} = \\frac{v_l + v_r}{2} \\cdot \\frac{v_r - v_l}{L}$$\n",
+    "\n",
+    "The `MultiRateEKF` class is imported from `kalman.py`. See the module for implementation details."
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "controllers-heading",
+   "metadata": {},
+   "source": [
+    "## Controllers\n",
+    "\n",
+    "Set up all three controllers for comparison."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "controllers-setup",
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2025-11-29T03:26:11.426096Z",
+     "iopub.status.busy": "2025-11-29T03:26:11.425932Z",
+     "iopub.status.idle": "2025-11-29T03:26:11.434732Z",
+     "shell.execute_reply": "2025-11-29T03:26:11.433238Z"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "# LQR setup\n",
+    "Q_lqr = np.diag([20.0, 20.0, 5.0, 0.1, 0.1])\n",
+    "R_lqr = np.diag([1.0, 1.0])\n",
+    "\n",
+    "x_nom = np.array([0, 0, 0, v_cruise, v_cruise])\n",
+    "A_c, B_c = compute_jacobians_at_state(x_nom, L, tau)\n",
+    "A_d = np.eye(n_x) + dt * A_c\n",
+    "B_d = dt * B_c\n",
+    "\n",
+    "P_dare = solve_discrete_are(A_d, B_d, Q_lqr, R_lqr)\n",
+    "K_lqr = np.linalg.solve(R_lqr + B_d.T @ P_dare @ B_d, B_d.T @ P_dare @ A_d)\n",
+    "\n",
+    "def lqr_control(x, x_ref, u_ref, K, u_max):\n",
+    "    e = state_error(x, x_ref)\n",
+    "    u = u_ref - K @ e\n",
+    "    return np.clip(u, -u_max, u_max)\n",
+    "\n",
+    "# QP-MPC setup\n",
+    "Q_mpc = np.diag([10.0, 10.0, 5.0, 0.1, 0.1])\n",
+    "R_mpc = np.diag([0.1, 0.1])\n",
+    "R_rate = np.diag([2.0, 2.0])\n",
+    "N_horizon = 15\n",
+    "\n",
+    "mpc_qp = QPMPC(L, tau, dt, Q_mpc, R_mpc, R_rate, N_horizon, u_max, exp_weight=1.0)\n",
+    "\n",
+    "# NL-MPC setup\n",
+    "Q_nl = np.diag([10.0, 10.0, 5.0, 0.1, 0.1])\n",
+    "R_nl = np.diag([0.1, 0.1])\n",
+    "N_horizon_nl = 10\n",
+    "N_control_nl = 5\n",
+    "\n",
+    "# Create dynamics function for NL-MPC\n",
+    "def dynamics_for_mpc(x, u, dt_step):\n",
+    "    return nonlinear_dynamics(x, u, dt_step, L, tau)\n",
+    "\n",
+    "mpc_nl = NonlinearMPC(dynamics_for_mpc, dt, Q_nl, R_nl, N_horizon_nl, N_control_nl, u_max)\n",
+    "\n",
+    "print(\"Controllers initialized\")"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "trajectory-heading",
+   "metadata": {},
+   "source": [
+    "## Reference Trajectory"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "trajectory",
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2025-11-29T03:26:11.436448Z",
+     "iopub.status.busy": "2025-11-29T03:26:11.436292Z",
+     "iopub.status.idle": "2025-11-29T03:26:11.602869Z",
+     "shell.execute_reply": "2025-11-29T03:26:11.601438Z"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "waypoints = np.array([\n",
+    "    [0.0, 0.0],\n",
+    "    [3.0, 3.0],\n",
+    "    [6.0, 2.0],\n",
+    "    [8.0, 5.0],\n",
+    "])\n",
+    "\n",
+    "x_ref, u_ref = generate_smooth_reference_trajectory(waypoints, t, v_cruise, L, tau, turn_time=1.0)\n",
+    "\n",
+    "plt.figure(figsize=(8, 6))\n",
+    "plt.plot(x_ref[0, :], x_ref[1, :], 'k--', linewidth=1.5, label='Reference')\n",
+    "plt.plot(waypoints[:, 0], waypoints[:, 1], 'ko', markersize=10)\n",
+    "plt.xlabel('x [m]')\n",
+    "plt.ylabel('y [m]')\n",
+    "plt.axis('equal')\n",
+    "plt.grid(True, alpha=0.3)\n",
+    "plt.legend()\n",
+    "plt.title('Reference Trajectory')\n",
+    "plt.show()"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "simulation-heading",
+   "metadata": {},
+   "source": [
+    "## Simulation Function\n",
+    "\n",
+    "Run closed-loop simulation with EKF state estimation. The controller uses the EKF estimate (not the true state)."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "simulation-func",
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2025-11-29T03:26:11.604751Z",
+     "iopub.status.busy": "2025-11-29T03:26:11.604583Z",
+     "iopub.status.idle": "2025-11-29T03:26:11.613765Z",
+     "shell.execute_reply": "2025-11-29T03:26:11.612724Z"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "def run_simulation(controller_name, controller_fn, x_ref, u_ref, waypoints,\n",
+    "                   camera_enabled=True, goal_tol=0.1, seed=42):\n",
+    "    \"\"\"\n",
+    "    Run closed-loop simulation with EKF estimation.\n",
+    "    \n",
+    "    Parameters\n",
+    "    ----------\n",
+    "    controller_name : str\n",
+    "        Name for display\n",
+    "    controller_fn : callable\n",
+    "        Function (x_hat, x_ref, u_ref, k) -> u\n",
+    "    x_ref, u_ref : arrays\n",
+    "        Reference trajectory\n",
+    "    waypoints : array\n",
+    "        Waypoints for goal detection\n",
+    "    camera_enabled : bool\n",
+    "        Whether to use camera updates\n",
+    "    goal_tol : float\n",
+    "        Terminate when within this distance of final waypoint\n",
+    "    seed : int\n",
+    "        Random seed\n",
+    "        \n",
+    "    Returns\n",
+    "    -------\n",
+    "    dict with x_true, x_hat, P_hist, u_hist, t\n",
+    "    \"\"\"\n",
+    "    rng = np.random.default_rng(seed)\n",
+    "    final_waypoint = waypoints[-1]\n",
+    "    \n",
+    "    # Initial state and covariance\n",
+    "    x0 = x_ref[:, 0].copy()\n",
+    "    P0 = np.diag([0.01, 0.01, 0.01, 0.001, 0.001])\n",
+    "    \n",
+    "    # Initialize EKF\n",
+    "    ekf = MultiRateEKF(L, tau, dt, Q_process, R_imu, R_camera, x0, P0)\n",
+    "    \n",
+    "    # Storage\n",
+    "    x_true = np.zeros((n_x, N))\n",
+    "    x_hat = np.zeros((n_x, N))\n",
+    "    P_hist = np.zeros((n_x, N))\n",
+    "    u_hist = np.zeros((n_u, N))\n",
+    "    \n",
+    "    # Initial conditions\n",
+    "    x_true[:, 0] = x0\n",
+    "    x_hat[:, 0] = ekf.get_state()\n",
+    "    P_hist[:, 0] = np.diag(ekf.get_covariance())\n",
+    "    \n",
+    "    # Measurement noise generators\n",
+    "    R_imu_chol = np.linalg.cholesky(R_imu)\n",
+    "    R_cam_chol = np.linalg.cholesky(R_camera)\n",
+    "    \n",
+    "    final_k = N - 1\n",
+    "    for k in range(N - 1):\n",
+    "        # Controller uses EKF estimate\n",
+    "        u_k = controller_fn(ekf.get_state(), x_ref[:, k], u_ref[:, k], k)\n",
+    "        u_hist[:, k] = u_k\n",
+    "        \n",
+    "        # True system propagation with process noise\n",
+    "        w = Q_chol @ rng.standard_normal(n_x)\n",
+    "        x_true[:, k+1] = nonlinear_dynamics(x_true[:, k], u_k, dt, L, tau) + w\n",
+    "        x_true[2, k+1] = angle_wrap(x_true[2, k+1])\n",
+    "        \n",
+    "        # Generate measurements from true state\n",
+    "        # IMU + encoder + accelerometer (always available)\n",
+    "        theta_true = x_true[2, k+1]\n",
+    "        v_l_true, v_r_true = x_true[3, k+1], x_true[4, k+1]\n",
+    "        theta_dot_true = (v_r_true - v_l_true) / L\n",
+    "        a_x_true = (1 / (2*tau)) * ((u_k[0] - v_l_true) + (u_k[1] - v_r_true))\n",
+    "        a_y_true = ((v_l_true + v_r_true) / 2) * theta_dot_true\n",
+    "        \n",
+    "        y_imu = np.array([theta_true, theta_dot_true, v_l_true, v_r_true, a_x_true, a_y_true])\n",
+    "        y_imu += R_imu_chol @ rng.standard_normal(6)\n",
+    "        \n",
+    "        # EKF predict\n",
+    "        ekf.predict(u_k)\n",
+    "        \n",
+    "        # EKF update with IMU/encoder/accel\n",
+    "        ekf.update_imu_encoder(y_imu, u_k)\n",
+    "        \n",
+    "        # Camera update (if enabled and at camera rate)\n",
+    "        if camera_enabled and (k+1) % camera_interval == 0:\n",
+    "            y_cam = x_true[:2, k+1] + R_cam_chol @ rng.standard_normal(2)\n",
+    "            ekf.update_camera(y_cam)\n",
+    "        \n",
+    "        # Store\n",
+    "        x_hat[:, k+1] = ekf.get_state()\n",
+    "        P_hist[:, k+1] = np.diag(ekf.get_covariance())\n",
+    "        \n",
+    "        # Early termination when goal reached\n",
+    "        dist_to_goal = np.sqrt((x_true[0, k+1] - final_waypoint[0])**2 + \n",
+    "                               (x_true[1, k+1] - final_waypoint[1])**2)\n",
+    "        if dist_to_goal < goal_tol and k > 50:\n",
+    "            final_k = k + 1\n",
+    "            break\n",
+    "    \n",
+    "    # Trim to actual length\n",
+    "    x_true = x_true[:, :final_k + 1]\n",
+    "    x_hat = x_hat[:, :final_k + 1]\n",
+    "    P_hist = P_hist[:, :final_k + 1]\n",
+    "    u_hist = u_hist[:, :final_k + 1]\n",
+    "    t_sim = t[:final_k + 1]\n",
+    "    \n",
+    "    return {\n",
+    "        'x_true': x_true,\n",
+    "        'x_hat': x_hat,\n",
+    "        'P_hist': P_hist,\n",
+    "        'u_hist': u_hist,\n",
+    "        't': t_sim,\n",
+    "        'name': controller_name,\n",
+    "        'camera': camera_enabled\n",
+    "    }"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "run-heading",
+   "metadata": {},
+   "source": [
+    "## Run Simulations\n",
+    "\n",
+    "Compare all three controllers with and without camera."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "run-simulations",
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2025-11-29T03:26:11.615772Z",
+     "iopub.status.busy": "2025-11-29T03:26:11.615590Z",
+     "iopub.status.idle": "2025-11-29T03:27:10.044486Z",
+     "shell.execute_reply": "2025-11-29T03:27:10.043440Z"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "# Define controller functions\n",
+    "def lqr_fn(x_hat, x_r, u_r, k):\n",
+    "    return lqr_control(x_hat, x_r, u_r, K_lqr, u_max)\n",
+    "\n",
+    "def qpmpc_fn(x_hat, x_r, u_r, k):\n",
+    "    k_end = min(k + N_horizon + 1, N)\n",
+    "    x_ref_h = x_ref[:, k:k_end]\n",
+    "    u_ref_h = u_ref[:, k:k_end]\n",
+    "    if x_ref_h.shape[1] < N_horizon + 1:\n",
+    "        pad = N_horizon + 1 - x_ref_h.shape[1]\n",
+    "        x_ref_h = np.hstack([x_ref_h, np.tile(x_ref[:, -1:], (1, pad))])\n",
+    "        u_ref_h = np.hstack([u_ref_h, np.tile(u_ref[:, -1:], (1, pad))])\n",
+    "    return mpc_qp.compute_control(x_hat, x_ref_h, u_ref_h)\n",
+    "\n",
+    "def nlmpc_fn(x_hat, x_r, u_r, k):\n",
+    "    k_end = min(k + N_horizon_nl + 1, N)\n",
+    "    x_ref_h = x_ref[:, k:k_end]\n",
+    "    u_ref_h = u_ref[:, k:k_end]\n",
+    "    if x_ref_h.shape[1] < N_horizon_nl + 1:\n",
+    "        pad = N_horizon_nl + 1 - x_ref_h.shape[1]\n",
+    "        x_ref_h = np.hstack([x_ref_h, np.tile(x_ref[:, -1:], (1, pad))])\n",
+    "        u_ref_h = np.hstack([u_ref_h, np.tile(u_ref[:, -1:], (1, pad))])\n",
+    "    return mpc_nl.compute_control(x_hat, x_ref_h, u_ref_h)\n",
+    "\n",
+    "# Run all simulations\n",
+    "print(\"Running simulations...\")\n",
+    "print(\"=\"*50)\n",
+    "\n",
+    "results = {}\n",
+    "\n",
+    "# LQR\n",
+    "print(\"LQR+FF without camera...\")\n",
+    "results['lqr_nocam'] = run_simulation('LQR+FF', lqr_fn, x_ref, u_ref, waypoints, camera_enabled=False, seed=42)\n",
+    "print(f\"  -> {len(results['lqr_nocam']['t'])} steps ({results['lqr_nocam']['t'][-1]:.1f}s)\")\n",
+    "print(\"LQR+FF with camera...\")\n",
+    "results['lqr_cam'] = run_simulation('LQR+FF', lqr_fn, x_ref, u_ref, waypoints, camera_enabled=True, seed=42)\n",
+    "print(f\"  -> {len(results['lqr_cam']['t'])} steps ({results['lqr_cam']['t'][-1]:.1f}s)\")\n",
+    "\n",
+    "# QP-MPC\n",
+    "print(\"QP-MPC without camera...\")\n",
+    "mpc_qp.reset()\n",
+    "results['qpmpc_nocam'] = run_simulation('QP-MPC', qpmpc_fn, x_ref, u_ref, waypoints, camera_enabled=False, seed=42)\n",
+    "print(f\"  -> {len(results['qpmpc_nocam']['t'])} steps ({results['qpmpc_nocam']['t'][-1]:.1f}s)\")\n",
+    "print(\"QP-MPC with camera...\")\n",
+    "mpc_qp.reset()\n",
+    "results['qpmpc_cam'] = run_simulation('QP-MPC', qpmpc_fn, x_ref, u_ref, waypoints, camera_enabled=True, seed=42)\n",
+    "print(f\"  -> {len(results['qpmpc_cam']['t'])} steps ({results['qpmpc_cam']['t'][-1]:.1f}s)\")\n",
+    "\n",
+    "# NL-MPC\n",
+    "print(\"NL-MPC without camera...\")\n",
+    "mpc_nl.reset()\n",
+    "results['nlmpc_nocam'] = run_simulation('NL-MPC', nlmpc_fn, x_ref, u_ref, waypoints, camera_enabled=False, seed=42)\n",
+    "print(f\"  -> {len(results['nlmpc_nocam']['t'])} steps ({results['nlmpc_nocam']['t'][-1]:.1f}s)\")\n",
+    "print(\"NL-MPC with camera...\")\n",
+    "mpc_nl.reset()\n",
+    "results['nlmpc_cam'] = run_simulation('NL-MPC', nlmpc_fn, x_ref, u_ref, waypoints, camera_enabled=True, seed=42)\n",
+    "print(f\"  -> {len(results['nlmpc_cam']['t'])} steps ({results['nlmpc_cam']['t'][-1]:.1f}s)\")\n",
+    "\n",
+    "print(\"=\"*50)\n",
+    "print(\"Done!\")"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "results-heading",
+   "metadata": {},
+   "source": [
+    "## Results\n",
+    "\n",
+    "### Trajectory Comparison"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "plot-trajectories",
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2025-11-29T03:27:10.046628Z",
+     "iopub.status.busy": "2025-11-29T03:27:10.046443Z",
+     "iopub.status.idle": "2025-11-29T03:27:10.334544Z",
+     "shell.execute_reply": "2025-11-29T03:27:10.333394Z"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "fig, axes = plt.subplots(1, 3, figsize=(15, 5))\n",
+    "\n",
+    "controllers = [('lqr', 'LQR+FF'), ('qpmpc', 'QP-MPC'), ('nlmpc', 'NL-MPC')]\n",
+    "\n",
+    "for ax, (key, name) in zip(axes, controllers):\n",
+    "    r_nocam = results[f'{key}_nocam']\n",
+    "    r_cam = results[f'{key}_cam']\n",
+    "    \n",
+    "    ax.plot(x_ref[0, :], x_ref[1, :], 'k--', linewidth=1, alpha=0.5, label='Reference')\n",
+    "    ax.plot(r_nocam['x_true'][0, :], r_nocam['x_true'][1, :], 'r-', linewidth=1.5, alpha=0.7, label='No camera')\n",
+    "    ax.plot(r_cam['x_true'][0, :], r_cam['x_true'][1, :], 'b-', linewidth=1.5, alpha=0.7, label='With camera')\n",
+    "    ax.plot(waypoints[:, 0], waypoints[:, 1], 'ko', markersize=8)\n",
+    "    \n",
+    "    ax.set_xlabel('x [m]')\n",
+    "    ax.set_ylabel('y [m]')\n",
+    "    ax.axis('equal')\n",
+    "    ax.grid(True, alpha=0.3)\n",
+    "    ax.legend(loc='upper left')\n",
+    "    ax.set_title(name)\n",
+    "\n",
+    "plt.tight_layout()\n",
+    "plt.show()"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "error-heading",
+   "metadata": {},
+   "source": [
+    "### Tracking Error"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "plot-errors",
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2025-11-29T03:27:10.337546Z",
+     "iopub.status.busy": "2025-11-29T03:27:10.337354Z",
+     "iopub.status.idle": "2025-11-29T03:27:10.646180Z",
+     "shell.execute_reply": "2025-11-29T03:27:10.644918Z"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "def compute_tracking_error(result, x_ref):\n",
+    "    n = len(result['t'])\n",
+    "    return np.sqrt((result['x_true'][0, :n] - x_ref[0, :n])**2 + \n",
+    "                   (result['x_true'][1, :n] - x_ref[1, :n])**2)\n",
+    "\n",
+    "fig, axes = plt.subplots(1, 3, figsize=(15, 4))\n",
+    "\n",
+    "for ax, (key, name) in zip(axes, controllers):\n",
+    "    r_nocam = results[f'{key}_nocam']\n",
+    "    r_cam = results[f'{key}_cam']\n",
+    "    \n",
+    "    err_nocam = compute_tracking_error(r_nocam, x_ref)\n",
+    "    err_cam = compute_tracking_error(r_cam, x_ref)\n",
+    "    \n",
+    "    rms_nocam = np.sqrt(np.mean(err_nocam**2))\n",
+    "    rms_cam = np.sqrt(np.mean(err_cam**2))\n",
+    "    \n",
+    "    ax.plot(r_nocam['t'], err_nocam*100, 'r-', linewidth=1.5, alpha=0.7, \n",
+    "            label=f'No camera ({rms_nocam*100:.1f} cm RMS)')\n",
+    "    ax.plot(r_cam['t'], err_cam*100, 'b-', linewidth=1.5, alpha=0.7, \n",
+    "            label=f'With camera ({rms_cam*100:.1f} cm RMS)')\n",
+    "    \n",
+    "    ax.set_xlabel('Time [s]')\n",
+    "    ax.set_ylabel('Position Error [cm]')\n",
+    "    ax.grid(True, alpha=0.3)\n",
+    "    ax.legend()\n",
+    "    ax.set_title(f'{name} Tracking Error')\n",
+    "\n",
+    "plt.tight_layout()\n",
+    "plt.show()"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "uncertainty-heading",
+   "metadata": {},
+   "source": [
+    "### Position Uncertainty\n",
+    "\n",
+    "The key benefit of camera updates: bounded position uncertainty. Without camera, uncertainty grows unbounded (dead reckoning drift)."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "plot-uncertainty",
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2025-11-29T03:27:10.647863Z",
+     "iopub.status.busy": "2025-11-29T03:27:10.647699Z",
+     "iopub.status.idle": "2025-11-29T03:27:11.276708Z",
+     "shell.execute_reply": "2025-11-29T03:27:11.275361Z"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "fig, axes = plt.subplots(1, 3, figsize=(15, 4))\n",
+    "\n",
+    "for ax, (key, name) in zip(axes, controllers):\n",
+    "    r_nocam = results[f'{key}_nocam']\n",
+    "    r_cam = results[f'{key}_cam']\n",
+    "    \n",
+    "    P_nocam = r_nocam['P_hist']\n",
+    "    P_cam = r_cam['P_hist']\n",
+    "    \n",
+    "    # Position uncertainty (x and y)\n",
+    "    sigma_xy_nocam = np.sqrt(P_nocam[0, :] + P_nocam[1, :])\n",
+    "    sigma_xy_cam = np.sqrt(P_cam[0, :] + P_cam[1, :])\n",
+    "    \n",
+    "    ax.plot(r_nocam['t'], sigma_xy_nocam*100, 'r-', linewidth=1.5, alpha=0.7, label='No camera')\n",
+    "    ax.plot(r_cam['t'], sigma_xy_cam*100, 'b-', linewidth=1.5, alpha=0.7, label='With camera')\n",
+    "    \n",
+    "    # Mark camera update times (on shorter array)\n",
+    "    t_cam = r_cam['t']\n",
+    "    cam_times = t_cam[::camera_interval]\n",
+    "    for ct in cam_times[1::5]:  # Every 5th for clarity\n",
+    "        ax.axvline(ct, color='gray', linestyle=':', alpha=0.3, linewidth=0.5)\n",
+    "    \n",
+    "    ax.set_xlabel('Time [s]')\n",
+    "    ax.set_ylabel('Position Uncertainty [cm]')\n",
+    "    ax.grid(True, alpha=0.3)\n",
+    "    ax.legend()\n",
+    "    ax.set_title(f'{name} Position Uncertainty (1-$\\\\sigma$)')\n",
+    "\n",
+    "plt.tight_layout()\n",
+    "plt.show()"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "estimation-heading",
+   "metadata": {},
+   "source": [
+    "### Estimation Error\n",
+    "\n",
+    "How well does the EKF estimate match the true state?"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "plot-estimation",
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2025-11-29T03:27:11.278776Z",
+     "iopub.status.busy": "2025-11-29T03:27:11.278599Z",
+     "iopub.status.idle": "2025-11-29T03:27:11.649484Z",
+     "shell.execute_reply": "2025-11-29T03:27:11.648165Z"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "def compute_estimation_error(result):\n",
+    "    return np.sqrt((result['x_true'][0, :] - result['x_hat'][0, :])**2 + \n",
+    "                   (result['x_true'][1, :] - result['x_hat'][1, :])**2)\n",
+    "\n",
+    "fig, axes = plt.subplots(1, 3, figsize=(15, 4))\n",
+    "\n",
+    "for ax, (key, name) in zip(axes, controllers):\n",
+    "    r_nocam = results[f'{key}_nocam']\n",
+    "    r_cam = results[f'{key}_cam']\n",
+    "    \n",
+    "    est_err_nocam = compute_estimation_error(r_nocam)\n",
+    "    est_err_cam = compute_estimation_error(r_cam)\n",
+    "    \n",
+    "    ax.plot(r_nocam['t'], est_err_nocam*100, 'r-', linewidth=1.5, alpha=0.7, label='No camera')\n",
+    "    ax.plot(r_cam['t'], est_err_cam*100, 'b-', linewidth=1.5, alpha=0.7, label='With camera')\n",
+    "    \n",
+    "    ax.set_xlabel('Time [s]')\n",
+    "    ax.set_ylabel('Estimation Error [cm]')\n",
+    "    ax.grid(True, alpha=0.3)\n",
+    "    ax.legend()\n",
+    "    ax.set_title(f'{name} Position Estimation Error')\n",
+    "\n",
+    "plt.tight_layout()\n",
+    "plt.show()"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "summary-heading",
+   "metadata": {},
+   "source": [
+    "## Summary"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "summary-table",
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2025-11-29T03:27:11.651606Z",
+     "iopub.status.busy": "2025-11-29T03:27:11.651406Z",
+     "iopub.status.idle": "2025-11-29T03:27:11.658299Z",
+     "shell.execute_reply": "2025-11-29T03:27:11.657005Z"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "print(\"\\n\" + \"=\"*80)\n",
+    "print(\"MULTI-RATE SENSOR FUSION RESULTS\")\n",
+    "print(\"=\"*80)\n",
+    "print(f\"\\n{'Controller':<12} {'Camera':<10} {'Track RMS':<12} {'Est RMS':<12} {'Final P_xy':<12}\")\n",
+    "print(\"-\"*80)\n",
+    "\n",
+    "for key, name in controllers:\n",
+    "    for suffix, cam_str in [('_nocam', 'No'), ('_cam', 'Yes')]:\n",
+    "        r = results[f'{key}{suffix}']\n",
+    "        track_err = compute_tracking_error(r, x_ref)\n",
+    "        est_err = compute_estimation_error(r)\n",
+    "        final_P = np.sqrt(r['P_hist'][0, -1] + r['P_hist'][1, -1])\n",
+    "        \n",
+    "        print(f\"{name:<12} {cam_str:<10} {np.sqrt(np.mean(track_err**2))*100:>6.2f} cm   \"\n",
+    "              f\"{np.sqrt(np.mean(est_err**2))*100:>6.2f} cm   {final_P*100:>6.2f} cm\")\n",
+    "\n",
+    "print(\"=\"*80)\n",
+    "print(\"\\nKey observations:\")\n",
+    "print(\"- Camera updates bound position uncertainty (dead reckoning drift eliminated)\")\n",
+    "print(\"- Lower estimation error leads to better tracking (feedback uses estimate)\")\n",
+    "print(\"- All controllers benefit from better state estimates\")\n",
+    "print(\"- MPC controllers can anticipate and handle estimation uncertainty better\")"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "conclusion",
+   "metadata": {},
+   "source": [
+    "## Conclusion\n",
+    "\n",
+    "Multi-rate sensor fusion with the EKF provides:\n",
+    "\n",
+    "1. **Bounded uncertainty** — Camera updates prevent unbounded drift from dead reckoning\n",
+    "2. **Better tracking** — Accurate state estimates enable effective feedback control\n",
+    "3. **Flexibility** — The EKF naturally handles sensors at different rates\n",
+    "\n",
+    "The accelerometer provides redundant velocity information that helps between camera updates, but cannot prevent position drift on its own since it doesn't directly observe position.\n",
+    "\n",
+    "For the Benji rover:\n",
+    "- IMU + encoders + accelerometer at 50 Hz for smooth control\n",
+    "- Camera at 5-10 Hz to bound position uncertainty\n",
+    "- All three controllers benefit from camera-aided navigation"
+   ]
+  }
+ ],
+ "metadata": {
+  "kernelspec": {
+   "display_name": ".venv",
+   "language": "python",
+   "name": "python3"
+  },
+  "language_info": {
+   "codemirror_mode": {
+    "name": "ipython",
+    "version": 3
+   },
+   "file_extension": ".py",
+   "mimetype": "text/x-python",
+   "name": "python",
+   "nbconvert_exporter": "python",
+   "pygments_lexer": "ipython3",
+   "version": "3.13.4"
+  }
+ },
+ "nbformat": 4,
+ "nbformat_minor": 5
+}
