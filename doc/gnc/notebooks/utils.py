@@ -61,7 +61,7 @@ def generate_smooth_reference_trajectory(waypoints, t, v_cruise, L, tau, turn_ti
         t: Time array
         v_cruise: Nominal cruise speed [m/s]
         L: Wheelbase [m]
-        tau: Motor time constant [s]
+        tau: Motor time constant [s] (unused, kept for API compatibility)
         turn_time: Time allocated for heading transitions [s]
 
     Returns:
@@ -71,12 +71,10 @@ def generate_smooth_reference_trajectory(waypoints, t, v_cruise, L, tau, turn_ti
                [u_l, u_r]
     """
     N = len(t)
-    dt = t[1] - t[0] if len(t) > 1 else 0.05
-
     x_ref = np.zeros((5, N))
     u_ref = np.zeros((2, N))
 
-    # Compute segments with turn phases
+    # Compute segments between waypoints
     segments = []
     for i in range(len(waypoints) - 1):
         p1, p2 = waypoints[i], waypoints[i + 1]
@@ -84,17 +82,14 @@ def generate_smooth_reference_trajectory(waypoints, t, v_cruise, L, tau, turn_ti
         dist = np.sqrt(dx**2 + dy**2)
         heading = np.arctan2(dy, dx)
         straight_time = dist / v_cruise if dist > 0.01 else 0.5
-        segments.append(
-            {
-                "start": p1,
-                "end": p2,
-                "heading": heading,
-                "dist": dist,
-                "straight_time": straight_time,
-            }
-        )
+        segments.append({
+            "start": p1,
+            "end": p2,
+            "heading": heading,
+            "straight_time": straight_time,
+        })
 
-    # Build timeline: [turn1, straight1, turn2, straight2, ...]
+    # Build timeline: [straight1, turn1, straight2, turn2, ...]
     # First segment has no initial turn (starts aligned)
     phases = []
     for i, seg in enumerate(segments):
@@ -102,44 +97,34 @@ def generate_smooth_reference_trajectory(waypoints, t, v_cruise, L, tau, turn_ti
             # Turn phase before this segment
             prev_heading = segments[i - 1]["heading"]
             delta_theta = angle_wrap(seg["heading"] - prev_heading)
-            phases.append(
-                {
-                    "type": "turn",
-                    "duration": turn_time,
-                    "start_heading": prev_heading,
-                    "end_heading": seg["heading"],
-                    "delta_theta": delta_theta,
-                    "position": seg["start"],  # Turn in place
-                }
-            )
+            phases.append({
+                "type": "turn",
+                "duration": turn_time,
+                "start_heading": prev_heading,
+                "delta_theta": delta_theta,
+                "position": seg["start"],
+            })
         # Straight phase
-        phases.append(
-            {
-                "type": "straight",
-                "duration": seg["straight_time"],
-                "heading": seg["heading"],
-                "start": seg["start"],
-                "end": seg["end"],
-            }
-        )
+        phases.append({
+            "type": "straight",
+            "duration": seg["straight_time"],
+            "heading": seg["heading"],
+            "start": seg["start"],
+            "end": seg["end"],
+        })
+
+    # Compute cumulative phase start times
+    phase_start_times = np.zeros(len(phases) + 1)
+    for i, phase in enumerate(phases):
+        phase_start_times[i + 1] = phase_start_times[i] + phase["duration"]
 
     # Generate trajectory points
-    phase_start_times = [0]
-    for phase in phases[:-1]:
-        phase_start_times.append(phase_start_times[-1] + phase["duration"])
-
     for k in range(N):
         tk = t[k]
 
-        # Find current phase
-        phase_idx = 0
-        for i, start_t in enumerate(phase_start_times):
-            if i + 1 < len(phase_start_times):
-                if tk >= start_t and tk < phase_start_times[i + 1]:
-                    phase_idx = i
-                    break
-            else:
-                phase_idx = i
+        # Find current phase via binary search
+        phase_idx = np.searchsorted(phase_start_times[1:], tk, side="right")
+        phase_idx = min(phase_idx, len(phases) - 1)
 
         phase = phases[phase_idx]
         t_in_phase = tk - phase_start_times[phase_idx]
@@ -149,36 +134,23 @@ def generate_smooth_reference_trajectory(waypoints, t, v_cruise, L, tau, turn_ti
             # Turning in place
             x_ref[0, k] = phase["position"][0]
             x_ref[1, k] = phase["position"][1]
-
-            # Smooth heading transition (linear interpolation)
             x_ref[2, k] = phase["start_heading"] + frac * phase["delta_theta"]
 
-            # Angular velocity needed
-            omega_needed = phase["delta_theta"] / phase["duration"]
-
-            # omega = (v_r - v_l) / L, keeping forward speed = 0 (turn in place)
-            # v_r - v_l = omega * L
-            # v_r + v_l = 0
+            # omega = (v_r - v_l) / L, with v_r + v_l = 0 (turn in place)
             # => v_r = omega*L/2, v_l = -omega*L/2
-            v_turn = omega_needed * L / 2
-            x_ref[3, k] = -v_turn  # v_l
-            x_ref[4, k] = v_turn  # v_r
-
-            # Feedforward for these velocities
-            u_ref[0, k] = -v_turn  # u_l
-            u_ref[1, k] = v_turn  # u_r
+            omega = phase["delta_theta"] / phase["duration"]
+            v_turn = omega * L / 2
+            x_ref[3, k] = -v_turn
+            x_ref[4, k] = v_turn
+            u_ref[0, k] = -v_turn
+            u_ref[1, k] = v_turn
 
         else:  # straight
-            # Position along segment (linear interpolation)
             x_ref[0, k] = phase["start"][0] + frac * (phase["end"][0] - phase["start"][0])
             x_ref[1, k] = phase["start"][1] + frac * (phase["end"][1] - phase["start"][1])
             x_ref[2, k] = phase["heading"]
-
-            # Velocities for straight-line motion
-            x_ref[3, k] = v_cruise  # v_l
-            x_ref[4, k] = v_cruise  # v_r
-
-            # Feedforward control
+            x_ref[3, k] = v_cruise
+            x_ref[4, k] = v_cruise
             u_ref[0, k] = v_cruise
             u_ref[1, k] = v_cruise
 

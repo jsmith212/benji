@@ -44,7 +44,7 @@ myst_substitutions = {
 # nbsphinx_execute = 'auto'
 
 templates_path = ['_templates']
-exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store', 'gnc/notebooks/appendix']
+exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store', 'gnc/notebooks/appendix', 'overview-pres']
 
 source_suffix = {
     '.rst': 'restructuredtext',
@@ -91,11 +91,18 @@ html_title = "Benji Documentation"
 html_logo = "_static/images/logo.png"
 html_favicon = "_static/images/logo.png"
 html_static_path = ['_static']
-html_extra_path = ['_static/.nojekyll']
+html_extra_path = ['_static/.nojekyll', 'overview-pres/dist']
 html_last_updated_fmt = "%b %d, %Y"
 html_domain_indices = False
 html_show_sourcelink = False
 html_show_sphinx = False
+
+html_context = {
+    "reference_links": {
+        "GitHub Repository": "https://github.com/sailorbob134280/benji",
+        "Overview Presentation": "presentation/index.html",
+    },
+}
 
 # -- Options for LaTeX/PDF output ----------------------------------------
 # Use xelatex for Unicode support (Greek letters in notebooks)

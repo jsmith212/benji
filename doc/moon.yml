@@ -10,6 +10,7 @@ tasks:
     description: "Build the Benji Docs HTML using Docker"
     deps:
       - "benji:docker-build-doc"
+      - "overview-pres:build"
     inputs:
       - "**/*.rst"
       - "**/*.md"

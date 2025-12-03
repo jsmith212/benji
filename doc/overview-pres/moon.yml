@@ -1,0 +1,50 @@
+layer: "application"
+language: "javascript"
+
+tasks:
+  build:
+    command: "docker run --rm -v $workspaceRoot/doc/overview-pres:/workspace benji-pres:latest"
+    description: "Build the Reveal.js presentation using Docker"
+    deps:
+      - "benji:docker-build-pres"
+    inputs:
+      - "src/**"
+      - "public/**"
+      - "index.html"
+      - "package.json"
+      - "package-lock.json"
+      - "vite.config.js"
+      - "tailwind.config.cjs"
+      - "postcss.config.cjs"
+    outputs:
+      - "dist/**"
+
+  clean:
+    command: "rm -rf dist node_modules"
+    description: "Clean build artifacts and node_modules"
+    options:
+      cache: false
+
+  dev:
+    command: "docker run --rm -it -v $workspaceRoot/doc/overview-pres:/workspace -p 5173:5173 benji-pres:latest 'npm ci && npm run dev -- --host'"
+    description: "Start the Vite development server"
+    deps:
+      - "benji:docker-build-pres"
+    options:
+      cache: false
+      persistent: true
+    local: true
+
+  preview:
+    command: "docker run --rm -it -v $workspaceRoot/doc/overview-pres:/workspace -p 4173:4173 benji-pres:latest 'npm ci && npm run preview -- --host'"
+    description: "Preview the production build"
+    deps:
+      - build
+    options:
+      cache: false
+      persistent: true
+    local: true
+
+project:
+  name: "Benji Overview Presentation"
+  description: "Reveal.js presentation for Benji project overview"

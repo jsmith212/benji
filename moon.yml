@@ -15,8 +15,15 @@ tasks:
     options:
       cache: false
 
+  docker-build-pres:
+    command: "docker build -t benji-pres:latest -f docker/overview-pres/Dockerfile ."
+    description: "Build the overview presentation Docker image"
+    options:
+      cache: false
+
   docker-build:
     description: "Build all Benji Docker images"
     deps:
       - docker-build-doc
       - docker-build-rt
+      - docker-build-pres

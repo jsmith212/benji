@@ -26,13 +26,27 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
+      - name: Build presentation container 🐳
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: docker/overview-pres/Dockerfile
+          tags: benji-pres:latest
+          load: true
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Build presentation 🎬
+        run: |
+          docker run --rm -v ${{ github.workspace }}/doc/overview-pres:/workspace benji-pres:latest
+
       - name: Build HTML docs 🔧
         run: |
-          docker run --rm -v ${{ github.workspace }}/doc:/workspace benji-doc:latest -M html . _build
+          docker run --rm -v ${{ github.workspace }}:/workspace -w /workspace/doc benji-doc:latest -M html . _build
 
       - name: Build PDF docs 📄
         run: |
-          docker run --rm -v ${{ github.workspace }}/doc:/workspace benji-doc:latest -M latexpdf . _build
+          docker run --rm -v ${{ github.workspace }}:/workspace -w /workspace/doc benji-doc:latest -M latexpdf . _build
 
       - name: Upload PDF artifact 📦
         uses: actions/upload-artifact@v4

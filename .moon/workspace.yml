@@ -9,5 +9,6 @@ projects:
   - "."
   - "benji-rt"
   - "doc"
+  - "doc/overview-pres"
   - "meta-benji"
   - "proto"
