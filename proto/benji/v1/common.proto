@@ -1,0 +1,71 @@
+syntax = "proto3";
+
+package benji.v1;
+
+import "google/protobuf/timestamp.proto";
+
+option go_package = "github.com/sailorbob134280/benji/proto/gen/go/benji/v1;benjiv1";
+
+// Standardized error message
+message Error {
+  enum ErrorCode {
+    ERROR_CODE_UNSPECIFIED = 0; // Unspecified, per proto3 convention
+    ERROR_CODE_SUCCESS = 1; // No error
+    ERROR_CODE_TIMEOUT = 2; // Operation timed out
+    ERROR_CODE_NOT_FOUND = 3; // Resource not found
+    ERROR_CODE_INVALID_ARG = 4; // Invalid argument provided
+    ERROR_CODE_INTERNAL = 5; // Internal server error
+    ERROR_CODE_UNAVAILABLE = 6; // The command is currently unavailable
+    ERROR_CODE_BUSY = 7; // The system is busy
+    ERROR_CODE_UNIMPLEMENTED = 8; // Feature not yet implemented
+  }
+  optional string message = 2; // Error message
+  google.protobuf.Timestamp time = 3; // Time of error occurrence
+}
+
+// Robot pose representation
+message Pose {
+  double x = 1; // X position in meters
+  double y = 2; // Y position in meters
+  double theta = 3; // Orientation in radians
+}
+
+// 3D vector representation
+message Vector3 {
+  float x = 1;
+  float y = 2;
+  float z = 3;
+}
+
+// GNC Control Modes
+enum ControlMode {
+  CONTROL_MODE_UNSPECIFIED = 0; // Unspecified, per proto3 convention
+  CONTROL_MODE_IDLE = 1; // Controller is idle
+  CONTROL_MODE_LQR = 2; // Controller is active
+  // TODO: Add modes for other controllers, e.g. MPC, NL-MPC
+}
+
+// GNC Estimator Modes
+enum EstimatorMode {
+  ESTIMATOR_MODE_UNSPECIFIED = 0; // Unspecified, per proto3 convention
+  ESTIMATOR_MODE_IDLE = 1; // Estimator is idle
+  ESTIMATOR_MODE_ACTIVE = 2; // Estimator is active
+}
+
+// Motor Closed-Loop Control Modes
+enum MotorClcMode {
+  MOTOR_CLC_MODE_UNSPECIFIED = 0; // Unspecified, per proto3 convention
+  MOTOR_CLC_MODE_AUTO = 1; // Motor CLC is tracking to internal GNC
+  MOTOR_CLC_MODE_MANUAL = 2; // Motor CLC is in manual mode
+  MOTOR_CLC_MODE_CALIBRATE = 3; // Motor CLC is in calibration mode
+  MOTOR_CLC_MODE_DISABLED = 4; // Motor CLC is disabled
+}
+
+// Motor identifiers
+enum Motor {
+  MOTOR_UNSPECIFIED = 0; // Unspecified motor
+  MOTOR_FRONT_LEFT = 1; // Front left motor
+  MOTOR_FRONT_RIGHT = 2; // Front right motor
+  MOTOR_BACK_LEFT = 3; // Back left motor
+  MOTOR_BACK_RIGHT = 4; // Back right motor
+}

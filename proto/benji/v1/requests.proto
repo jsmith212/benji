@@ -1,0 +1,88 @@
+syntax = "proto3";
+
+package benji.v1;
+
+import "benji/v1/common.proto";
+import "google/protobuf/timestamp.proto";
+
+option go_package = "github.com/sailorbob134280/benji/proto/gen/go/benji/v1;benjiv1";
+
+message Request {
+  enum RequestType {
+    REQUEST_TYPE_UNSPECIFIED = 0;
+    REQUEST_TYPE_IMU = 1; // Request IMU sensor data
+    REQUEST_TYPE_MAG = 2; // Request magnetometer data
+    REQUEST_TYPE_ENCODER = 3; // Request wheel encoder data
+    REQUEST_TYPE_TOF = 4; // Request time-of-flight distance sensor data
+    REQUEST_TYPE_POSE = 5; // Request robot pose data
+    REQUEST_TYPE_MODES = 6; // Request current modes (control, estimator, etc.)
+    REQUEST_TYPE_MOTOR_SPEEDS = 7; // Request motor speeds
+    REQUEST_TYPE_CAMERA_TILT = 8; // Request camera tilt angle
+  }
+  RequestType type = 1; // Type of sensor data requested
+}
+
+message Response {
+  oneof response {
+    Error error = 1; // Error information, if any
+    ImuData imu_data = 2; // IMU sensor data
+    MagData mag_data = 3; // Magnetometer data
+    EncoderData encoder_data = 4; // Wheel encoder data
+    TofData tof_data = 5; // Time-of-flight distance sensor data
+    Pose pose = 6; // Robot pose data
+    SystemModes system_modes = 7; // Current system modes
+    MotorSpeeds motor_speeds = 8; // Motor speeds
+    CameraTilt camera_tilt = 9; // Camera tilt angle
+  }
+}
+
+// IMU sensor data
+message ImuData {
+  google.protobuf.Timestamp timestamp = 1;
+  Vector3 acceleration = 2; // m/s^2
+  Vector3 angular_velocity = 3; // rad/s
+}
+
+// Magnetometer data
+message MagData {
+  google.protobuf.Timestamp timestamp = 1;
+  Vector3 magnetic_field = 2; // microteslas
+}
+
+// Wheel encoder data
+message EncoderData {
+  google.protobuf.Timestamp timestamp = 1;
+  int32 fl_ticks = 2; // Encoder ticks, front left
+  int32 fr_ticks = 3; // Encoder ticks, front right
+  int32 bl_ticks = 4; // Encoder ticks, back left
+  int32 br_ticks = 5; // Encoder ticks, back right
+}
+
+// Time-of-flight distance sensor
+message TofData {
+  google.protobuf.Timestamp timestamp = 1;
+  float distance_mm = 2;
+}
+
+// Modes of the RT subsystems
+message SystemModes {
+  google.protobuf.Timestamp timestamp = 1;
+  ControlMode control_mode = 2;
+  EstimatorMode estimator_mode = 3;
+  MotorClcMode motor_clc_mode = 4;
+}
+
+// Motor speeds
+message MotorSpeeds {
+  google.protobuf.Timestamp timestamp = 1;
+  float fl_rpm = 2; // Front left motor speed in RPM
+  float fr_rpm = 3; // Front right motor speed in RPM
+  float bl_rpm = 4; // Back left motor speed in RPM
+  float br_rpm = 5; // Back right motor speed in RPM
+}
+
+// Camera tilt angle
+message CameraTilt {
+  google.protobuf.Timestamp timestamp = 1;
+  float angle_deg = 2; // Camera tilt angle in degrees from horizontal
+}

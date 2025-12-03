@@ -1,0 +1,38 @@
+layer: "library"
+language: "other"
+
+tasks:
+  lint:
+    command: "docker run --rm -v $projectRoot:/workspace -w /workspace bufbuild/buf lint"
+    description: "Lint protobuf files"
+    inputs:
+      - "buf.yaml"
+      - "benji/**/*.proto"
+
+  format:
+    command: "docker run --rm -v $projectRoot:/workspace -w /workspace bufbuild/buf format -w"
+    description: "Format protobuf files"
+    options:
+      cache: false
+
+  generate:
+    command: "docker run --rm -v $projectRoot:/workspace -w /workspace bufbuild/buf generate"
+    description: "Generate code from protobuf definitions"
+    deps:
+      - lint
+    inputs:
+      - "buf.yaml"
+      - "buf.gen.yaml"
+      - "benji/**/*.proto"
+    outputs:
+      - "gen/**"
+
+  clean:
+    command: "rm -rf gen"
+    description: "Clean generated code"
+    options:
+      cache: false
+
+project:
+  name: "proto"
+  description: "Protobuf API definitions for RT-Compute communication"

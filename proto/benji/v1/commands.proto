@@ -1,0 +1,107 @@
+syntax = "proto3";
+
+package benji.v1;
+
+import "benji/v1/common.proto";
+import "google/protobuf/empty.proto";
+import "google/protobuf/timestamp.proto";
+
+option go_package = "github.com/sailorbob134280/benji/proto/gen/go/benji/v1;benjiv1";
+
+// CommandResponse represents the response to a command sent to the robot.
+message CommandResponse {
+  Error error = 1; // Error information, if any
+}
+
+// Command represents a command sent to the robot.
+message Command {
+  oneof command {
+    TrackPath track_path = 1; // Command to track a specified path
+    TurnToHeading turn_to_heading = 2; // Command to turn to a specific heading
+    SetCameraAngle set_camera_angle = 3; // Command to set the camera angle
+    SetMotorGains set_motor_gains = 4; // Command to set motor control gains
+    SetMotorClcMode set_motor_clc_mode = 5; // Command to set motor CLC mode
+    SetMotorManualCommand set_motor_manual_command = 6; // Command to manually control a motor
+    SetControlMode set_control_mode = 7; // Command to set the control mode
+    SetEstimatorMode set_estimator_mode = 8; // Command to set the estimator mode
+    SetControlRates set_control_rates = 9; // Command to set control update rates
+    SetSensorRates set_sensor_rates = 10; // Command to set sensor update rates
+    EmergencyStop emergency_stop = 11; // Command to initiate an emergency stop
+    ClearEmergencyStop clear_emergency_stop = 12; // Command to clear an emergency stop
+    SetWallClock set_wall_clock = 13; // Command to set the robot's wall clock
+  }
+}
+
+// TrackPath command to follow a specified path.
+message TrackPath {
+  repeated benji.v1.Pose path = 1; // Sequence of poses defining the waypoints to follow
+}
+
+// TurnToHeading command to turn the robot to a specific heading.
+message TurnToHeading {
+  float heading = 1; // Desired heading in radians
+}
+
+// SetCameraAngle command to set the camera angle.
+message SetCameraAngle {
+  float angle = 1; // Desired camera angle in degrees from horizontal
+}
+
+// SetMotorGains command to set the motor control gains.
+message SetMotorGains {
+  float kp = 1; // Proportional gain
+  float ki = 2; // Integral gain
+  float kd = 3; // Derivative gain
+}
+
+// SetMotorClcMode command to set the motor closed-loop control mode.
+message SetMotorClcMode {
+  MotorClcMode mode = 1; // Desired motor CLC mode
+}
+
+// SetMotorManualCommand command to manually control a motor.
+message SetMotorManualCommand {
+  Motor motor = 1; // Motor to command
+  float motor_command = 2; // Motor command
+}
+
+// SetControlMode command to set the control mode.
+message SetControlMode {
+  ControlMode mode = 1; // Desired controller mode
+}
+
+// SetEstimatorMode command to set the estimator mode.
+message SetEstimatorMode {
+  EstimatorMode mode = 1; // Desired estimator mode
+}
+
+// SetControlRates command to set control update rates.
+message SetControlRates {
+  optional int32 clc_rate_hz = 1; // Motor CLC update rate in Hz
+  optional int32 gnc_rate_hz = 2; // GNC controller update rate in Hz
+}
+
+// SetSensorRates command to set sensor update rates.
+message SetSensorRates {
+  optional int32 imu_rate_hz = 1; // IMU update rate in Hz
+  optional int32 mag_rate_hz = 2; // Magnetometer update rate in Hz
+  optional int32 wheel_encoder_rate_hz = 3; // Wheel encoder update rate in Hz
+  optional int32 tof_rate_hz = 4; // Time-of-flight sensor update rate in Hz
+}
+
+// EmergencyStop command to stop all actuators immediately.
+message EmergencyStop {
+  google.protobuf.Empty empty = 1;
+}
+
+// ClearEmergencyStop command to clear an emergency stop condition.
+message ClearEmergencyStop {
+  google.protobuf.Empty empty = 1;
+}
+
+// SetWallClock command to set the robot's wall clock time.
+// Note: this isn't likely to be terribly accurate due to the non-RT nature of
+// the compute platform and the latency of the command interface.
+message SetWallClock {
+  google.protobuf.Timestamp timestamp = 1; // Desired wall clock time
+}
