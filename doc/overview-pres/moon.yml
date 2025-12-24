@@ -20,7 +20,7 @@ tasks:
       - "dist/**"
 
   clean:
-    command: "rm -rf dist node_modules"
+    command: "docker run --rm -it -v $workspaceRoot/doc/overview-pres:/workspace benji-pres:latest 'rm -rf dist node_modules'"
     description: "Clean build artifacts and node_modules"
     options:
       cache: false
